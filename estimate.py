@@ -16,7 +16,7 @@ Nops = np.array([0.5, 0.75, 1, 2, 4])
 s_e = 5
 rds = 0.15
 kappa = 2
-convex = True
+convex = False
 path = "data/"
 respath = "results/"
 heavy_tail = False
@@ -25,8 +25,7 @@ if heavy_tail is True:
 else:
     ht = ''
 # Calculation of estimate of lambda
-@partial(jax.jit, static_argnums=(1,))
-def loss_nonconvex_reg(param, x_h):
+def loss_nonconvex_reg(param):
     """
     F with nonconvex regularizer
     :param x_h: Nx1xp permuted observations
@@ -74,10 +73,9 @@ def loss_convex_reg(param):
     return loss
 
 # The smooth part of model selection loss:
-@jax.jit
 def rho(param):
     loss = 0
-    mid = param[zeta < jnp.abs(param) <= zeta * alpha]
+    mid = param[np.logical_and(zeta < jnp.abs(param), jnp.abs(param) <= zeta * alpha)]
     loss = loss + jnp.sum(-mid**2 + 2*zeta*alpha*abs(mid)+zeta**2)/(2*(alpha-1))
     out = param[jnp.abs(param) > alpha*zeta]
     loss = loss + jnp.sum((alpha+1)*zeta**2/2-abs(out)*zeta)
@@ -92,8 +90,8 @@ def calc_xh(x, V_e):
 
 
 # Soft thresholding
-def g_prox(param, alpha):
-    alphazeta = alpha * zeta
+def g_prox(param, stepsize):
+    alphazeta = stepsize * zeta
     param[param >= alphazeta] -= alphazeta
     param[np.abs(param) < alphazeta] = 0
     param[param < -alphazeta] += alphazeta
@@ -135,7 +133,7 @@ for i1 in range(ps.shape[0]):
         #s_e = binary_search_s_gaussian(x, V_e, q=5, lambda_e=lambda_e)
         x_h = calc_xh(x, V_e)
         if convex == False:
-            loss_prime = jit(grad(loss_nonconvex_reg))
+            loss_prime = grad(loss_nonconvex_reg)
             result = fmin_cgprox(f=loss_nonconvex_reg, f_prime=loss_prime, g_prox=g_prox, x0=np.zeros(s_e * p * 2), verbose=2 )
         else:
             loss_prime = jit(grad(loss_convex_reg))
