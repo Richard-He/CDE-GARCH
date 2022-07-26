@@ -1,18 +1,21 @@
+import numpy
 import numpy as np
 import numpy.random as rdm
 import scipy.stats as stats
 import scipy.linalg as linalg
 
 # Initialize Parameters
-ps = [64,]
-Nops = [1,2,3]
-s = 10
-rds = 0.5
-kappa = 2
-ka = 60
-kb = 60
+ps = np.array([64])
+Nops = np.array([0.5])
+# ps = np.array([64, 256, 1024])
+# Nops = np.array([0.5, 0.75, 1, 2, 4])
+s = 4
+rds = 0.1
+kappa = 10
+ka = 10
+kb = 10
 
-heavy_tail = True
+heavy_tail = False
 if heavy_tail:
     ht = 'ht'
 else:
@@ -44,7 +47,7 @@ def get_next_lambda(x_t, lambda_t, lambda_s, A, B, Vp, p):
 
 
 def data_gen(p, N, s, rds, kappa):
-    lambda_s = np.concatenate((np.flip(np.arange(1, s + 1)) * kappa, np.ones(p - s) / p/100))
+    lambda_s = np.concatenate((np.flip(np.arange(1, s + 1)) * kappa, np.ones(p - s) / p))
     V = stats.ortho_group.rvs(dim=p)
     Vp = V.T
 
@@ -57,12 +60,12 @@ def data_gen(p, N, s, rds, kappa):
 
     A = np.pad(tempA.reshape(s, p), ((0, p-s), (0, 0)), 'constant')
     # Preprocess B
-    tempB = np.zeros(s*p)
-    randommaskb = rdm.permutation(s*p)[:kb]
+    tempB = np.zeros(s**2)
+    randommaskb = rdm.permutation(s**2)[:kb]
     tempB[randommaskb] = np.random.choice(a=[-1, 1], size=(randommaskb.shape[0])) * 1/kb * rds
-    B = np.pad(tempB.reshape(s, p), ((0, p-s), (0, 0)), 'constant')
+    B = np.pad(tempB.reshape(s, s), ((0, p-s), (0, p-s)), 'constant')
 
-    x = np.zeros([N, p])
+    x = np.zeros([N, p], dtype=numpy.float64)
     x_t = sample_x(lambda_s, V, p)
     lambda_t = lambda_s
     x[0] = x_t
@@ -80,10 +83,9 @@ def data_gen(p, N, s, rds, kappa):
 def start():
     for Nop in Nops:
         for p in ps:
-            N = p * Nop
+            N = int(np.ceil(p * Nop))
             data_gen(p, N, s, rds, kappa)
 
-start()
 
 def data_gen_test(p, N, s, rds, kappa):
     lambda_s = np.concatenate((np.flip(np.arange(1, s + 1)) * kappa, np.ones(p - s) / p/10))
@@ -113,3 +115,4 @@ def data_gen_test(p, N, s, rds, kappa):
         x_t = sample_x(lambda_t, V, p)
         x[i] = x_t
     return x
+

@@ -5,7 +5,7 @@ from scipy import optimize
 from scipy import linalg
 
 # Proximal Gradient Method implemented by C-OPT Package by
-def fmin_cgprox(f, f_prime, g_prox, x0, rtol=1e-5, tol=1e-4,
+def fmin_cgprox(f, f_prime, g_prox, x0, rtol=1e-2,
                 maxiter=1000, verbose=0, default_step_size=1.):
     """
     proximal gradient-descent solver for optimization problems of the form
@@ -70,7 +70,7 @@ def fmin_cgprox(f, f_prime, g_prox, x0, rtol=1e-5, tol=1e-4,
         if verbose > 1:
             print("Iteration %s, Error: %s" % (it, linalg.norm(Gt)))
 
-        if np.abs(fk_old - fk) / fk < rtol | np.abs(fk_old - fk) < tol:
+        if np.abs(fk_old - fk) / fk < rtol:
             if verbose:
                 print("Achieved relative tolerance at iteration %s" % it)
                 success = True

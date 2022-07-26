@@ -129,11 +129,6 @@ def test_power(p, Nop, s,rds, kappa, q, times):
             corr += 1
     return corr/times
 
-def test_size(p, Nop, times, heavy_tail):
-    if heavy_tail is True:
-        random_gen = stats.t
-    for i in range(times):
 
 
-
-print(test_fdr(64,1,1,0.5,1,1,1000))
+# print(test_fdr(64,1,1,0.5,1,1,1000))
