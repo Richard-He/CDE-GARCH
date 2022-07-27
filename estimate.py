@@ -11,29 +11,36 @@ from tests import v_lambda, binary_search_s_gaussian
 from jax import grad, jit, vmap
 import scipy.linalg as linalg
 from scipy import optimize
-
+import logging
+from time import gmtime, strftime
 
 import argparse
 
-parser = argparse.ArgumentParser(description='Parsing Input before estimate')
+parser = argparse.ArgumentParser(description='Parsing Input before estimation')
 parser.add_argument('--s', type=int, default=5,
                     help='dimension of the ')
 parser.add_argument('--h','--heavytail', action='store_true',
-                    help='Using Heavy Tailed white noise or not')
+                    help='Using Heavy Tailed white noise')
 parser.set_defaults(h=False)
+parser.add_argument('--rtol', type=float, default=1e-6,
+                    help='approximate spectral radius of A and B')
+parser.add_argument('--k','--kappa', type=float, default=10,
+                    help='rate between the last eigenvalue in the dynamic region versus the static region')
+parser.add_argument('--ka', type=int, default=10, help='sparsity of A')
+parser.add_argument('--kb', type=int, default=10, help='sparsity of B')
+parser.add_argument('--d', '--data', type=str, default='data/',
+                    help='data path')
+parser.add_argument('--re', '--results', type=str, default='results/',
+                    help='results path')
 parser.add_argument('--c','--convex', action='store_true',
                     help='Using convex loss or not')
 parser.set_defaults(c=False)
-parser.add_argument('--r','--rtol', type=float, default=1e-6,
-                    help='related tolerance')
 parser.add_argument('--z','--zeta', type=float, default=1e-1,
                     help='regularization hyperparameter')
 parser.add_argument('--a','--alpha',type=float, default=2.5,
                     help='SCAD hyperparameter')
-parser.add_argument('--d','--data',type=str, default='data/',
-                    help='data location')
-parser.add_argument('--re','--results',type=str, default='results/',
-                    help='results location')
+parser.add_argument('--l','--logging',type=str,default='log/',
+                    help='logging path')
 args = vars(parser.parse_args())
 # Loss function evaluation
 
@@ -45,14 +52,24 @@ alpha = args['a']
 convex = args['c']
 path = args['d']
 respath = args['re']
-if args['h'] is True:
+heavyt = args['h']
+if heavyt is True:
     ht = '_heavy_tail'
 else:
     ht = ''
-if args['c'] is True:
+if convex is True:
     conv = '_convex_'
 else:
     conv = ''
+
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+logging.basicConfig(filename=args['l']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+f'_log_convex_{convex}_heavy_tail_{heavyt}.log',format='%(asctime)s %(message)s',
+                     level=logging.INFO)
+
+# print('finished')
+
+
 # Calculation of estimate of lambda
 def loss_nonconvex_reg(param):
     """
@@ -162,25 +179,26 @@ for i1 in range(ps.shape[0]):
         x_h = calc_xh(x, V_e)
         if convex == False:
             loss_prime = grad(loss_nonconvex_reg)
-            result = fmin_cgprox(f=loss_nonconvex_reg, f_prime=loss_prime, g_prox=g_prox, x0=np.zeros(s_e * p * 2), \
-                                 verbose=2, rtol=args['r'])
+            result = fmin_cgprox(f=loss_nonconvex_reg, f_prime=loss_prime, g_prox=g_prox, x0=np.zeros(s_e * p * 2),
+                                 verbose=2, rtol=args['rtol'])
         else:
             loss_prime = grad(loss_convex_reg)
-            result = fmin_cgprox(f=loss_convex_reg, f_prime=loss_prime, g_prox=g_prox, x0=np.zeros(s_e * p * 2), verbose=2)
+            result = fmin_cgprox(f=loss_convex_reg, f_prime=loss_prime, g_prox=g_prox, x0=np.zeros(s_e * p * 2), verbose=2,
+                                 rtol=args['rtol'])
         if result.success:
             l2error, fdr = evaluate(result.x, param_true)
             fdrs[i1, i2] = fdr
             l2errors[i1, i2] = l2error
             V_errs[i1, i2] = V_error
             lambda_errs[i1, i2] = lambda_err
-            print("lambda_err", lambda_err)
-            print("V_err", V_error)
-            print("l2_error", l2error)
-            print("fdr", fdr)
+            logging.info(f"lambda_err {lambda_err}")
+            logging.info(f"V_err {V_error}")
+            logging.info(f"l2_error {l2error}")
+            logging.info(f"fdr {fdr}")
         else:
-            print("param difference", result.x - param_true)
-            print("V difference", V_e - V_true)
-            print("lambda_diff", lambda_true - lambda_e)
+            logging.info(f"param difference {result.x - param_true}")
+            logging.info(f"V difference {V_e - V_true}")
+            logging.info(f"lambda_diff {lambda_true - lambda_e}")
             exit()
 np.save(respath + f"l2errors" + ht + conv + ".npy", l2errors)
 np.save(respath + f"fdrs" + ht + conv + ".npy", fdrs)
@@ -200,13 +218,13 @@ np.save(respath + f"V_errs" + ht + conv + ".npy", V_errs)
 #         V_true = np.load(f"V_p={p}_N={N}.npy")
 #         V_e, lambda_e = v_lambda(x)
 #         V_error = linalg.norm(V_e.reshape(-1) - V_true.reshape(-1), 2)
-#         print("V_err", V_error)
+#         logging.info("V_err", V_error)
 #         lambda_true = np.load(f"lambda_s_p={p}_N={N}.npy")
 #
 #         lambda_err = linalg.norm(lambda_e - lambda_true, 2)
-#         print("lambda_err", lambda_err)
+#         logging.info("lambda_err", lambda_err)
 #         s_e = binary_search_s_gaussian(x, V_e, q=5, lambda_e=lambda_e)
-#         print("s_e", s_e)
+#         logging.info("s_e", s_e)
 #         x_h = calc_xh(x, V_e)
 #         if convex == False:
 #             loss_prime = grad(loss_nonconvex_reg)
@@ -221,9 +239,9 @@ np.save(respath + f"V_errs" + ht + conv + ".npy", V_errs)
 #             V_errs[i1, i2] = V_error
 #             lambda_errs[i1, i2] = lambda_err
 #         else:
-#             print("param difference", result.x - param_true)
-#             print("V difference", V_e - V_true)
-#             print("lambda_diff", lambda_true - lambda_e)
+#             logging.info("param difference", result.x - param_true)
+#             logging.info("V difference", V_e - V_true)
+#             logging.info("lambda_diff", lambda_true - lambda_e)
 #             exit()
 # np.save(f"l2errors.npy", l2errors)
 # np.save(f"fdrs.npy", fdrs)
@@ -241,11 +259,11 @@ np.save(respath + f"V_errs" + ht + conv + ".npy", V_errs)
 #     V_true = np.load(f"data/V_p={p}_N={N}.npy")
 #     V_e, lambda_e = v_lambda(x)
 #     V_error = linalg.norm(V_e.reshape(-1) - V_true.reshape(-1), 2)
-#     print("V_err", V_error)
+#     logging.info("V_err", V_error)
 #     lambda_true = np.load(f"data/lambda_s_p={p}_N={N}.npy")
 #
 #     lambda_err = linalg.norm(lambda_e - lambda_true, 2)
-#     print("lambda_err", lambda_err)
+#     logging.info("lambda_err", lambda_err)
 #     s_e = binary_search_s_gaussian(x, V_e, q=1, lambda_e=lambda_e)
-#     print("Nops", Nops[i2])
-#     print("s_e", s_e)
+#     logging.info("Nops", Nops[i2])
+#     logging.info("s_e", s_e)

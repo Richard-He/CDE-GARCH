@@ -3,7 +3,7 @@ import numpy as np
 
 import scipy.linalg as linalg
 import scipy.stats as stats
-from syndata_generate import data_gen_test
+# from syndata_generate import data_gen_test
 
 def v_lambda(x):
     """

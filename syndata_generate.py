@@ -4,6 +4,7 @@ import numpy.random as rdm
 import scipy.stats as stats
 import scipy.linalg as linalg
 import argparse
+
 parser = argparse.ArgumentParser(description='Parsing Input before generating synthetic data')
 parser.add_argument('--s', type=int, default=5,
                     help='dimension of the ')
@@ -17,9 +18,9 @@ parser.add_argument('--k','--kappa', type=float, default=10,
 parser.add_argument('--ka', type=int, default=10, help='sparsity of A')
 parser.add_argument('--kb', type=int, default=10, help='sparsity of B')
 parser.add_argument('--d', '--data', type=str, default='data/',
-                    help='data location')
+                    help='data path')
 parser.add_argument('--re', '--results', type=str, default='results/',
-                    help='results location')
+                    help='results path')
 parser.add_argument('--c','--convex', action='store_true',
                     help='Using convex loss or not')
 parser.set_defaults(c=False)
@@ -29,7 +30,10 @@ parser.add_argument('--z','--zeta', type=float, default=1e-1,
                     help='regularization hyperparameter')
 parser.add_argument('--a','--alpha',type=float, default=2.5,
                     help='SCAD hyperparameter')
+parser.add_argument('--l','--logging',type=str,default='log/',
+                    help='logging path')
 args = vars(parser.parse_args())
+
 # Initialize Parameters
 ps = np.array([64, 256, 1024])
 Nops = np.array([0.5, 0.75, 1, 2, 4])
