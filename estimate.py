@@ -13,7 +13,7 @@ import scipy.linalg as linalg
 from scipy import optimize
 import logging
 from time import gmtime, strftime
-
+import logging
 import argparse
 
 parser = argparse.ArgumentParser(description='Parsing Input before estimation')
@@ -65,7 +65,7 @@ else:
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 logging.basicConfig(filename=args['l']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+f'_log_convex_{convex}_heavy_tail_{heavyt}.log',format='%(asctime)s %(message)s',
-                     level=logging.INFO)
+                     level=logging.DEBUG)
 
 # print('finished')
 

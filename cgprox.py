@@ -3,6 +3,7 @@ import numpy as np
 import jax.numpy as jnp
 from scipy import optimize
 from scipy import linalg
+import logging
 
 # Proximal Gradient Method implemented by C-OPT Package by
 def fmin_cgprox(f, f_prime, g_prox, x0, rtol=1e-6,
@@ -68,15 +69,15 @@ def fmin_cgprox(f, f_prime, g_prox, x0, rtol=1e-6,
         fk = f(xk)
 
         if verbose > 1:
-            print("Iteration %s, Error: %s" % (it, linalg.norm(Gt)))
+            logging.info("Iteration %s, Error: %s" % (it, linalg.norm(Gt)))
 
         if np.abs(fk_old - fk) / fk < rtol:
             if verbose:
-                print("Achieved relative tolerance at iteration %s" % it)
+                logging.info("Achieved relative tolerance at iteration %s" % it)
                 success = True
             break
     else:
-        warnings.warn(
+        logging.warning(
             "fmin_cgprox did not reach the desired tolerance level",
             RuntimeWarning)
 
