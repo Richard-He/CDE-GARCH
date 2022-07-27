@@ -1,4 +1,7 @@
 import warnings
+
+import numpy
+
 from cgprox import fmin_cgprox
 import numpy as np
 from functools import partial
@@ -9,18 +12,40 @@ from jax import grad, jit, vmap
 import scipy.linalg as linalg
 from scipy import optimize
 
+
+import argparse
+
+parser = argparse.ArgumentParser(description='Parsing Input before estimate')
+parser.add_argument('--s', type=int, default=5,
+                    help='dimension of the ')
+parser.add_argument('--h','--heavytail', action='store_true',
+                    help='Using Heavy Tailed white noise or not')
+parser.set_defaults(h=False)
+parser.add_argument('--c','--convex', action='store_true',
+                    help='Using convex loss or not')
+parser.set_defaults(c=False)
+parser.add_argument('--r','--rtol', type=float, default=1e-6,
+                    help='related tolerance')
+parser.add_argument('--z','--zeta', type=float, default=1e-1,
+                    help='regularization hyperparameter')
+parser.add_argument('--a','--alpha',type=float, default=2.5,
+                    help='SCAD hyperparameter')
+parser.add_argument('--d','--data',type=str, default='data/',
+                    help='data location')
+parser.add_argument('--re','--results',type=str, default='results/',
+                    help='results location')
+args = vars(parser.parse_args())
 # Loss function evaluation
 
 ps = np.array([64, 256, 1024])
 Nops = np.array([0.5, 0.75, 1, 2, 4])
-s_e = 5
-rds = 0.15
-kappa = 2
-convex = False
-path = "data/"
-respath = "results/"
-heavy_tail = False
-if heavy_tail is True:
+s_e = args['s']
+zeta = args['z']
+alpha = args['a']
+convex = args['c']
+path = args['d']
+respath = args['re']
+if args['h'] is True:
     ht = '_heavy_tail'
 else:
     ht = ''
@@ -105,8 +130,7 @@ def evaluate(param, true_param):
     return l2error, fdr
 
 # parameters for the SCAD loss function
-zeta = 0.05
-alpha = 2.5
+
 
 # Start:
 l2errors = np.zeros([ps.shape[0], Nops.shape[0]])
@@ -134,7 +158,8 @@ for i1 in range(ps.shape[0]):
         x_h = calc_xh(x, V_e)
         if convex == False:
             loss_prime = grad(loss_nonconvex_reg)
-            result = fmin_cgprox(f=loss_nonconvex_reg, f_prime=loss_prime, g_prox=g_prox, x0=np.zeros(s_e * p * 2), verbose=2 )
+            result = fmin_cgprox(f=loss_nonconvex_reg, f_prime=loss_prime, g_prox=g_prox, x0=np.zeros(s_e * p * 2), \
+                                 verbose=2, rtol=args['r'])
         else:
             loss_prime = jit(grad(loss_convex_reg))
             result = fmin_cgprox(f=loss_convex_reg, f_prime=loss_prime, g_prox=g_prox, x0=np.zeros(s_e * p * 2), verbose=2)

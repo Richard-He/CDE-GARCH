@@ -5,7 +5,7 @@ from scipy import optimize
 from scipy import linalg
 
 # Proximal Gradient Method implemented by C-OPT Package by
-def fmin_cgprox(f, f_prime, g_prox, x0, rtol=1e-2,
+def fmin_cgprox(f, f_prime, g_prox, x0, rtol=1e-6,
                 maxiter=1000, verbose=0, default_step_size=1.):
     """
     proximal gradient-descent solver for optimization problems of the form

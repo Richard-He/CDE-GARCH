@@ -11,4 +11,7 @@ module purge
 module load anaconda3/2021.11 cudatoolkit/11.7 cudnn/cuda-11.x/8.2.0
 conda activate jax-gpu
 
-python
+mkdir data
+mkdir results
+python syndata_generate.py
+python estimate.py
