@@ -132,4 +132,4 @@ def data_gen_test(p, N, s, rds, kappa):
         x_t = sample_x(lambda_t, V, p)
         x[i] = x_t
     return x
-
+start()
