@@ -52,7 +52,7 @@ else:
 if args['c'] is True:
     conv = '_convex_'
 else:
-    else conv = ''
+    conv = ''
 # Calculation of estimate of lambda
 def loss_nonconvex_reg(param):
     """
