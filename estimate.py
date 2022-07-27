@@ -44,8 +44,8 @@ parser.add_argument('--l','--logging',type=str,default='log/',
 args = vars(parser.parse_args())
 # Loss function evaluation
 
-ps = np.array([64, 256, 1024])
-Nops = np.array([0.5, 0.75, 1, 2, 4])
+ps = np.array([64, 128, 256, 512, 1024])
+Nops = np.array([0.5, 1, 2, 4, 8])
 s_e = args['s']
 zeta = args['z']
 alpha = args['a']
@@ -66,7 +66,6 @@ for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 logging.basicConfig(filename=args['l']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+f'_log_convex_{convex}_heavy_tail_{heavyt}.log',format='%(asctime)s %(message)s',
                      level=logging.DEBUG)
-
 # print('finished')
 
 
@@ -200,7 +199,7 @@ for i1 in range(ps.shape[0]):
             logging.info(f"V difference {V_e - V_true}")
             logging.info(f"lambda_diff {lambda_true - lambda_e}")
             exit()
-np.save(respath + f"l2errors" + ht + conv + ".npy", l2errors)
+np.save(respath + f"l2errors" + ht + conv + "p={}"+ ".npy", l2errors)
 np.save(respath + f"fdrs" + ht + conv + ".npy", fdrs)
 np.save(respath + f"lambda_errors" + ht + conv + ".npy", lambda_errs)
 np.save(respath + f"V_errs" + ht + conv + ".npy", V_errs)

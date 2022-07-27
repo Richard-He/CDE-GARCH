@@ -35,8 +35,8 @@ parser.add_argument('--l','--logging',type=str,default='log/',
 args = vars(parser.parse_args())
 
 # Initialize Parameters
-ps = np.array([64, 256, 1024])
-Nops = np.array([0.5, 0.75, 1, 2, 4])
+ps = np.array([64, 128, 256, 512, 1024])
+Nops = np.array([0.5, 1, 2, 4, 8, 16])
 # ps = np.array([64, 256, 1024])
 # Nops = np.array([0.5, 0.75, 1, 2, 4])
 s = args['s']
