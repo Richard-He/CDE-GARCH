@@ -20,6 +20,15 @@ parser.add_argument('--d', '--data', type=str, default='data/',
                     help='data location')
 parser.add_argument('--re', '--results', type=str, default='results/',
                     help='results location')
+parser.add_argument('--c','--convex', action='store_true',
+                    help='Using convex loss or not')
+parser.set_defaults(c=False)
+parser.add_argument('--rtol', type=float, default=1e-6,
+                    help='related tolerance')
+parser.add_argument('--z','--zeta', type=float, default=1e-1,
+                    help='regularization hyperparameter')
+parser.add_argument('--a','--alpha',type=float, default=2.5,
+                    help='SCAD hyperparameter')
 args = vars(parser.parse_args())
 # Initialize Parameters
 ps = np.array([64, 256, 1024])

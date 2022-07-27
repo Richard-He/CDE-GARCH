@@ -49,6 +49,10 @@ if args['h'] is True:
     ht = '_heavy_tail'
 else:
     ht = ''
+if args['c'] is True:
+    conv = '_convex_'
+else:
+    else conv = ''
 # Calculation of estimate of lambda
 def loss_nonconvex_reg(param):
     """
@@ -161,7 +165,7 @@ for i1 in range(ps.shape[0]):
             result = fmin_cgprox(f=loss_nonconvex_reg, f_prime=loss_prime, g_prox=g_prox, x0=np.zeros(s_e * p * 2), \
                                  verbose=2, rtol=args['r'])
         else:
-            loss_prime = jit(grad(loss_convex_reg))
+            loss_prime = grad(loss_convex_reg)
             result = fmin_cgprox(f=loss_convex_reg, f_prime=loss_prime, g_prox=g_prox, x0=np.zeros(s_e * p * 2), verbose=2)
         if result.success:
             l2error, fdr = evaluate(result.x, param_true)
@@ -178,10 +182,10 @@ for i1 in range(ps.shape[0]):
             print("V difference", V_e - V_true)
             print("lambda_diff", lambda_true - lambda_e)
             exit()
-np.save(respath + f"l2errors" + ht + ".npy", l2errors)
-np.save(respath + f"fdrs" + ht + ".npy", fdrs)
-np.save(respath + f"lambda_errors" + ht + ".npy", lambda_errs)
-np.save(respath + f"V_errs" + ht + ".npy", V_errs)
+np.save(respath + f"l2errors" + ht + conv + ".npy", l2errors)
+np.save(respath + f"fdrs" + ht + conv + ".npy", fdrs)
+np.save(respath + f"lambda_errors" + ht + conv + ".npy", lambda_errs)
+np.save(respath + f"V_errs" + ht + conv + ".npy", V_errs)
 
 # for i1 in range(ps.shape[0]):
 #     i = ps[i1]
