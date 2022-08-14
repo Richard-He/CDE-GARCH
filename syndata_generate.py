@@ -125,8 +125,10 @@ def start():
     for Nop in Nops:
         for p in ps:
             N = int(np.ceil(p * Nop))
-            data_gen(p, N, s, rds, kappa)
-
+            try:
+                data_gen(p, N, s, rds, kappa)
+            except Exception as Argument:
+                logging.exception(f'Error occured at p={p}, N={N}')
 
 def data_gen_test(p, N, s, rds, kappa):
     lambda_s = np.concatenate((np.flip(np.arange(1, s + 1)) * kappa, np.ones(p - s) / p/10))
