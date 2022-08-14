@@ -35,7 +35,7 @@ parser.add_argument('--re', '--results', type=str, default='results/',
 parser.add_argument('--c','--convex', action='store_true',
                     help='Using convex loss or not')
 parser.set_defaults(c=False)
-parser.add_argument('--z','--zeta', type=float, default=1e-2,
+parser.add_argument('--z','--zeta', type=float, default=1,
                     help='regularization hyperparameter')
 parser.add_argument('--a','--alpha',type=float, default=2.5,
                     help='SCAD hyperparameter')
@@ -67,7 +67,7 @@ else:
 
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
-logging.basicConfig(filename=args['l']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+f'_log_convex_{convex}_heavy_tail_{heavyt}.log',format='%(asctime)s %(message)s',
+logging.basicConfig(filename=args['l']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+f'_log_convex_{convex}_heavy_tail_{heavyt}'+f'z={zeta}'+'.log',format='%(asctime)s %(message)s',
                      level=logging.DEBUG)
 # print('finished')
 
@@ -204,10 +204,10 @@ for i1 in range(ps.shape[0]):
             logging.info(f"V difference {V_e - V_true}")
             logging.info(f"lambda_diff {lambda_true - lambda_e}")
             exit()
-np.save(respath + f"l2errors" + ht + conv + ".npy", l2errors)
-np.save(respath + f"fdrs" + ht + conv + ".npy", fdrs)
-np.save(respath + f"lambda_errors" + ht + conv + ".npy", lambda_errs)
-np.save(respath + f"V_errs" + ht + conv + ".npy", V_errs)
+np.save(respath + f"l2errors" + ht + conv + f'z={zeta}'+".npy", l2errors)
+np.save(respath + f"fdrs" + ht + conv + f'z={zeta}'+ ".npy", fdrs)
+np.save(respath + f"lambda_errors" + ht + conv + f'z={zeta}'+".npy", lambda_errs)
+np.save(respath + f"V_errs" + ht + conv + f'z={zeta}'+".npy", V_errs)
 
 # for i1 in range(ps.shape[0]):
 #     i = ps[i1]
