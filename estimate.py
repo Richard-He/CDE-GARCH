@@ -22,7 +22,7 @@ parser.add_argument('--s', type=int, default=5,
 parser.add_argument('--h','--heavytail', action='store_true',
                     help='Using Heavy Tailed white noise')
 parser.set_defaults(h=False)
-parser.add_argument('--rtol', type=float, default=1e-6,
+parser.add_argument('--rtol', type=float, default=1e-7,
                     help='approximate spectral radius of A and B')
 parser.add_argument('--k','--kappa', type=float, default=10,
                     help='rate between the last eigenvalue in the dynamic region versus the static region')
@@ -147,13 +147,6 @@ def g_prox(param, stepsize):
 
 
 def evaluate(param, true_param):
-    flat_a = param[:s_e * p]
-    flat_b = param[s_e * p:]
-    A_es = flat_a.reshape(s_e, p)
-    B_es = flat_b.reshape(s_e, p)
-    A_final = np.pad(A_es, ((0, p-s_e), (0, 0)), 'constant').reshape(-1)
-    B_final = np.pad(B_es, ((0, p-s_e), (0, 0)), 'constant').reshape(-1)
-    param = np.concatenate((A_final, B_final))
     l2error = linalg.norm(param - true_param, 2)
     fdr = np.sum(true_param[param != 0] == 0) / np.sum(param != 0)
     return l2error, fdr
@@ -196,7 +189,15 @@ for i1 in range(ps.shape[0]):
                                  verbose=2,
                                  rtol=args['rtol'])
         if result.success:
-            l2error, fdr = evaluate(result.x, param_true)
+            param = result.x
+            flat_a = param[:s_e * p]
+            flat_b = param[s_e * p:]
+            A_es = flat_a.reshape(s_e, p)
+            B_es = flat_b.reshape(s_e, p)
+            A_final = np.pad(A_es, ((0, p - s_e), (0, 0)), 'constant').reshape(-1)
+            B_final = np.pad(B_es, ((0, p - s_e), (0, 0)), 'constant').reshape(-1)
+            param = np.concatenate((A_final, B_final))
+            l2error, fdr = evaluate(param, param_true)
             fdrs[i1, i2] = fdr
             l2errors[i1, i2] = l2error
             V_errs[i1, i2] = V_error
@@ -205,10 +206,10 @@ for i1 in range(ps.shape[0]):
             logging.info(f"V_err {V_error}")
             logging.info(f"l2_error {l2error}")
             logging.info(f"fdr {fdr}")
-            logging.info(f"nonzeros {(result.x!=0).nonzero()}")
+            logging.info(f"nonzeros {(param!=0).nonzero()}")
             logging.info(f"nonzeros {(param_true!=0).nonzero()}")
         else:
-            logging.info(f"param difference {result.x - param_true}")
+            logging.info(f"param difference {param - param_true}")
             logging.info(f"V difference {V_e - V_true}")
             logging.info(f"lambda_diff {lambda_true - lambda_e}")
             exit()
