@@ -4,7 +4,7 @@ import jax.numpy as jnp
 from scipy import optimize
 from scipy import linalg
 import logging
-
+import time
 # Proximal Gradient Method implemented by C-OPT Package by
 def fmin_cgprox(f, f_prime, g_prox, x0, rtol=1e-6,
                 maxiter=1000, verbose=0, default_step_size=1.):
@@ -83,4 +83,6 @@ def fmin_cgprox(f, f_prime, g_prox, x0, rtol=1e-6,
 
     return optimize.OptimizeResult(
         x=xk, success=success, fun=fk, jac=grad_fk, nit=it)
+
+
 

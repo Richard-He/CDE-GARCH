@@ -1,3 +1,8 @@
+"""
+Miss-specified Data Generation
+
+
+"""
 import numpy
 import numpy as np
 import numpy.random as rdm
@@ -11,7 +16,7 @@ parser.add_argument('--s', type=int, default=5,
 parser.add_argument('--h','--heavytail', action='store_true',
                     help='Using Heavy Tailed white noise')
 parser.set_defaults(h=False)
-parser.add_argument('--r','--rds', type=float, default=0.5,
+parser.add_argument('--r','--rds', type=float, default=0.1,
                     help='approximate spectral radius of A and B')
 parser.add_argument('--k','--kappa', type=float, default=10,
                     help='rate between the last eigenvalue in the dynamic region versus the static region')
@@ -86,13 +91,13 @@ def data_gen(p, N, s, rds, kappa):
 
     # print(U.shape, S_clip.shape, Vh.shape)
     randommaska = rdm.permutation(s*p)[:ka]
-    tempA[randommaska] = np.random.choice(a=[-1, 1], size=(randommaska.shape[0])) / np.sqrt(ka) * rds
+    tempA[randommaska] = np.random.choice(a=[-1, 1], size=(randommaska.shape[0])) * 1/ka * rds
 
     A = np.pad(tempA.reshape(s, p), ((0, p-s), (0, 0)), 'constant')
     # Preprocess B
     tempB = np.zeros(s**2)
     randommaskb = rdm.permutation(s**2)[:kb]
-    tempB[randommaskb] = np.random.choice(a=[-1, 1], size=(randommaskb.shape[0])) / np.sqrt(kb) * rds
+    tempB[randommaskb] = np.random.choice(a=[-1, 1], size=(randommaskb.shape[0])) * 1/kb * rds
     B = np.pad(tempB.reshape(s, s), ((0, p-s), (0, p-s)), 'constant')
 
     x = np.zeros([N, p], dtype=numpy.float64)
