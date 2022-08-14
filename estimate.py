@@ -68,7 +68,7 @@ else:
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 logging.basicConfig(filename=args['l']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+f'_log_convex_{convex}_heavy_tail_{heavyt}'+f'z={zeta}'+'.log',format='%(asctime)s %(message)s',
-                     level=logging.DEBUG)
+                     level=logging.INFO)
 # print('finished')
 
 
@@ -118,7 +118,7 @@ def loss_convex_reg(param):
         lambda_ei = lambda_e[:s_e] - (A_es + B_es)[:, :s_e] @ lambda_e[:s_e] + A_es @ (ximinus ** 2) + B_es[:, :s_e] @ lambda_eiminus
         loss = loss + jnp.sum(jnp.log(lambda_ei) + x_h[i, :s_e] ** 2 / lambda_ei) / N
         lambda_eiminus = lambda_ei
-    return loss / N
+    return loss
 
 # The smooth part of model selection loss:
 def rho(param):
@@ -147,7 +147,13 @@ def g_prox(param, stepsize):
 
 
 def evaluate(param, true_param):
-    param = np.concatenate((param, np.zeros(true_param.shape[0]-param.shape[0])))
+    flat_a = param[:s_e * p]
+    flat_b = param[s_e * p:]
+    A_es = flat_a.reshape(s_e, p)
+    B_es = flat_b.reshape(s_e, p)
+    A_final = np.pad(A_es, ((0, p-s_e), (0, 0)), 'constant').reshape(-1)
+    B_final = np.pad(B_es, ((0, p-s_e), (0, 0)), 'constant').reshape(-1)
+    param = np.concatenate((A_final, B_final))
     l2error = linalg.norm(param - true_param, 2)
     fdr = np.sum(true_param[param != 0] == 0) / np.sum(param != 0)
     return l2error, fdr
