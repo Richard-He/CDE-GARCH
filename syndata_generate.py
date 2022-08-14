@@ -54,9 +54,9 @@ else:
 
 def sample_x(lambd, V, p):
     if args['h']:
-        epsilon_t = stats.t.rvs(2.4, size=p)
+        epsilon_t = stats.t.rvs(3, size=p)
         #print(epsilon_t.shape)
-        var = 2.4 / (2.4-2)
+        var = 3 / (3-2)
         epsilon_t *= 1/np.sqrt(var)
     else:
         epsilon_t = rdm.randn(p)
