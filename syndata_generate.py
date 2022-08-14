@@ -4,6 +4,10 @@ import numpy.random as rdm
 import scipy.stats as stats
 import scipy.linalg as linalg
 import argparse
+import logging
+from time import gmtime, strftime
+
+
 
 parser = argparse.ArgumentParser(description='Parsing Input before generating synthetic data')
 parser.add_argument('--s', type=int, default=5,
@@ -51,6 +55,12 @@ if args['h']:
 else:
     ht = ''
 # Functions
+
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+logging.basicConfig(filename=args['l']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+f'data_generate_{ht}'+f'r={rds}'+'.log',format='%(asctime)s %(message)s',
+                     level=logging.DEBUG)
+
 
 def sample_x(lambd, V, p):
     if args['h']:
@@ -103,6 +113,7 @@ def data_gen(p, N, s, rds, kappa):
         lambda_t = get_next_lambda(x_t, lambda_t, lambda_s, A, B, Vp, p)
         x_t = sample_x(lambda_t, V, p)
         x[i] = x_t
+    logging.debug(f"Success,X_p={p}_N={N}"+ht)
     np.save(f"data/X_p={p}_N={N}"+ht+".npy", x)
     np.save(f"data/V_p={p}_N={N}"+ht+".npy", V)
     np.save(f"data/A_p={p}_N={N}"+ht+".npy", A)
