@@ -45,7 +45,7 @@ args = vars(parser.parse_args())
 # Loss function evaluation
 
 ps = np.array([64, 128, 256, 512, 1024])
-Nops = np.array([0.5, 1, 2, 4, 8])
+Nops = np.array([0.5, 1, 2, 4, 8, 16])
 s_e = args['s']
 zeta = args['z']
 alpha = args['a']
@@ -199,6 +199,8 @@ for i1 in range(ps.shape[0]):
             logging.info(f"V_err {V_error}")
             logging.info(f"l2_error {l2error}")
             logging.info(f"fdr {fdr}")
+            logging.info(f"nonzeros {(result.x!=0).nonzero()}")
+            logging.info(f"nonzeros {(param_true!=0).nonzero()}")
         else:
             logging.info(f"param difference {result.x - param_true}")
             logging.info(f"V difference {V_e - V_true}")

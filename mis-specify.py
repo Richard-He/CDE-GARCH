@@ -9,6 +9,10 @@ import numpy.random as rdm
 import scipy.stats as stats
 import scipy.linalg as linalg
 import argparse
+import logging
+from time import gmtime, strftime
+
+
 
 parser = argparse.ArgumentParser(description='Parsing Input before generating synthetic data')
 parser.add_argument('--s', type=int, default=5,
@@ -16,7 +20,7 @@ parser.add_argument('--s', type=int, default=5,
 parser.add_argument('--h','--heavytail', action='store_true',
                     help='Using Heavy Tailed white noise')
 parser.set_defaults(h=False)
-parser.add_argument('--r','--rds', type=float, default=0.1,
+parser.add_argument('--r','--rds', type=float, default=0.5,
                     help='approximate spectral radius of A and B')
 parser.add_argument('--k','--kappa', type=float, default=10,
                     help='rate between the last eigenvalue in the dynamic region versus the static region')
@@ -40,8 +44,8 @@ parser.add_argument('--l','--logging',type=str,default='log/',
 args = vars(parser.parse_args())
 
 # Initialize Parameters
-ps = np.array([64, 128, 256, 512, 1024])
-Nops = np.array([0.5, 1, 2, 4, 8, 16])
+ps = np.array([64, 128, 256, 512])
+Nops = np.array([0.5, 1, 2, 4, 8])
 # ps = np.array([64, 256, 1024])
 # Nops = np.array([0.5, 0.75, 1, 2, 4])
 s = args['s']
@@ -57,11 +61,17 @@ else:
     ht = ''
 # Functions
 
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+logging.basicConfig(filename=args['l']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+f'data_generate_{ht}'+f'r={rds}'+'.log',format='%(asctime)s %(message)s',
+                     level=logging.DEBUG)
+
+
 def sample_x(lambd, V, p):
     if args['h']:
-        epsilon_t = stats.t.rvs(3, size=p)
+        epsilon_t = stats.t.rvs(4, size=p)
         #print(epsilon_t.shape)
-        var = 3 / (3-2)
+        var = 4 / (4-2)
         epsilon_t *= 1/np.sqrt(var)
     else:
         epsilon_t = rdm.randn(p)
@@ -91,13 +101,13 @@ def data_gen(p, N, s, rds, kappa):
 
     # print(U.shape, S_clip.shape, Vh.shape)
     randommaska = rdm.permutation(s*p)[:ka]
-    tempA[randommaska] = np.random.choice(a=[-1, 1], size=(randommaska.shape[0])) * 1/ka * rds
+    tempA[randommaska] = np.random.choice(a=[-1, 1], size=(randommaska.shape[0])) / np.sqrt(ka) * rds
 
     A = np.pad(tempA.reshape(s, p), ((0, p-s), (0, 0)), 'constant')
     # Preprocess B
     tempB = np.zeros(s**2)
     randommaskb = rdm.permutation(s**2)[:kb]
-    tempB[randommaskb] = np.random.choice(a=[-1, 1], size=(randommaskb.shape[0])) * 1/kb * rds
+    tempB[randommaskb] = np.random.choice(a=[-1, 1], size=(randommaskb.shape[0])) / np.sqrt(kb) * rds
     B = np.pad(tempB.reshape(s, s), ((0, p-s), (0, p-s)), 'constant')
 
     x = np.zeros([N, p], dtype=numpy.float64)
@@ -108,6 +118,7 @@ def data_gen(p, N, s, rds, kappa):
         lambda_t = get_next_lambda(x_t, lambda_t, lambda_s, A, B, Vp, p)
         x_t = sample_x(lambda_t, V, p)
         x[i] = x_t
+    logging.debug(f"Success,X_p={p}_N={N}"+ht)
     np.save(f"data/X_p={p}_N={N}"+ht+".npy", x)
     np.save(f"data/V_p={p}_N={N}"+ht+".npy", V)
     np.save(f"data/A_p={p}_N={N}"+ht+".npy", A)
@@ -119,8 +130,10 @@ def start():
     for Nop in Nops:
         for p in ps:
             N = int(np.ceil(p * Nop))
-            data_gen(p, N, s, rds, kappa)
-
+            try:
+                data_gen(p, N, s, rds, kappa)
+            except Exception as Argument:
+                logging.exception(f'Error occured at p={p}, N={N}' +ht)
 
 def data_gen_test(p, N, s, rds, kappa):
     lambda_s = np.concatenate((np.flip(np.arange(1, s + 1)) * kappa, np.ones(p - s) / p/10))
@@ -151,3 +164,4 @@ def data_gen_test(p, N, s, rds, kappa):
         x[i] = x_t
     return x
 start()
+
