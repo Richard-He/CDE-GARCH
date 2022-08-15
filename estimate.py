@@ -67,7 +67,8 @@ else:
 
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
-logging.basicConfig(filename=args['l']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+f'_log_convex_{convex}_heavy_tail_{heavyt}'+f'z={zeta}'+'.log',format='%(asctime)s %(message)s',
+logging.basicConfig(filename=args['l']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+f'_log_convex_{convex}_heavy_tail_{heavyt}'+f'z={zeta}'
+                             +f'alpha={alpha}'+'.log',format='%(asctime)s %(message)s',
                      level=logging.INFO)
 # print('finished')
 
