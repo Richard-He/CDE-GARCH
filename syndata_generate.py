@@ -39,10 +39,10 @@ parser.add_argument('--l','--logging',type=str,default='log/',
 args = vars(parser.parse_args())
 
 # Initialize Parameters
-# ps = np.array([64, 128, 256, 512, 1024])
-# Nops = np.array([0.25, 0.5, 1, 2, 4, 8])
-ps = np.array([64,])
-Nops = np.array([0.25,])
+ps = np.array([64, 128, 256, 512, 1024])
+Nops = np.array([0.25, 0.5, 1, 2, 4, 8])
+# ps = np.array([64,])
+# Nops = np.array([0.25,])
 s = args['s']
 rds = args['r']
 kappa = args['k']
@@ -100,12 +100,12 @@ def data_gen(p, N, s, rds, kappa):
     # A = np.pad(tempA.reshape(s, p), ((0, p-s), (0, 0)), 'constant')
     tempA = np.zeros(s**2)
     randommaska = rdm.permutation(s**2)[:ka]
-    tempA[randommaska] = np.random.choice(a=[-1, 1], size=(randommaska.shape[0])) / np.sqrt(ka) * rds
+    tempA[randommaska] = np.random.choice(a=[1], size=(randommaska.shape[0])) / np.sqrt(ka) * rds
     A = np.pad(tempA.reshape(s, s), ((0, p - s), (0, p - s)), 'constant')
     # Preprocess B
     tempB = np.zeros(s**2)
     randommaskb = rdm.permutation(s**2)[:kb]
-    tempB[randommaskb] = np.random.choice(a=[-1, 1], size=(randommaskb.shape[0])) / np.sqrt(kb) * rds
+    tempB[randommaskb] = np.random.choice(a=[1], size=(randommaskb.shape[0])) / np.sqrt(kb) * rds
     B = np.pad(tempB.reshape(s, s), ((0, p-s), (0, p-s)), 'constant')
 
     x = np.zeros([N, p], dtype=numpy.float64)
@@ -125,13 +125,10 @@ def data_gen(p, N, s, rds, kappa):
 
 
 def start():
-    for Nop in Nops:
-        for p in ps:
+    for p in ps:
+        for Nop in Nops:
             N = int(np.ceil(p * Nop))
-            try:
-                data_gen(p, N, s, rds, kappa)
-            except Exception as Argument:
-                logging.exception(f'Error occured at p={p}, N={N}')
+            data_gen(p, N, s, rds, kappa)
 
 def data_gen_test(p, N, s, rds, kappa):
     lambda_s = np.concatenate((np.flip(np.arange(1, s + 1)) * kappa, np.ones(p - s) / p/10))
@@ -161,4 +158,5 @@ def data_gen_test(p, N, s, rds, kappa):
         x_t = sample_x(lambda_t, V, p)
         x[i] = x_t
     return x
+
 start()
