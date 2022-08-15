@@ -37,7 +37,7 @@ parser.add_argument('--c','--convex', action='store_true',
 parser.set_defaults(c=False)
 parser.add_argument('--z','--zeta', type=float, default=1,
                     help='regularization hyperparameter')
-parser.add_argument('--a','--alpha',type=float, default=2.5,
+parser.add_argument('--a','--alpha',type=float, default=3,
                     help='SCAD hyperparameter')
 parser.add_argument('--l','--logging',type=str,default='log/',
                     help='logging path')
@@ -45,7 +45,7 @@ args = vars(parser.parse_args())
 # Loss function evaluation
 
 ps = np.array([64, 128, 256, 512, 1024])
-Nops = np.array([0.125, 0.25, 0.5, 1, 2, 4, 8])
+Nops = np.array([0.25, 0.5, 1, 2, 4, 8])
 s_e = args['s']
 zeta = args['z']
 alpha = args['a']
@@ -122,12 +122,14 @@ def loss_convex_reg(param):
 
 # The smooth part of model selection loss:
 def rho(param):
-    loss = 0
-    mid = param[np.logical_and(zeta < jnp.abs(param), jnp.abs(param) <= zeta * alpha)]
-    loss = loss + jnp.sum(-mid**2 + 2*zeta*alpha*abs(mid)+zeta**2)/(2*(alpha-1))
-    out = param[jnp.abs(param) > alpha*zeta]
-    loss = loss + jnp.sum((alpha+1)*zeta**2/2-abs(out)*zeta)
-    return loss
+    def pointwise_scad(t):
+        if jnp.abs(t) <= zeta:
+            return 0
+        elif jnp.abs(t) <= alpha * zeta and jnp.abs(t) > zeta:
+            return -(t**2 - 2*zeta*jnp.abs(t)+zeta**2)/(2*alpha-2)
+        else:
+            return (alpha+1)*zeta**2/2 - zeta * jnp.abs(t)
+    return jnp.vectorize(pointwise_scad(param))
 
 
 def calc_xh(x, V_e):
