@@ -39,9 +39,10 @@ parser.add_argument('--l','--logging',type=str,default='log/',
 args = vars(parser.parse_args())
 
 # Initialize Parameters
-ps = np.array([64, 128, 256, 512, 1024])
-Nops = np.array([0.25, 0.5, 1, 2, 4, 8])
-
+# ps = np.array([64, 128, 256, 512, 1024])
+# Nops = np.array([0.25, 0.5, 1, 2, 4, 8])
+ps = np.array([64,])
+Nops = np.array([0.25,])
 s = args['s']
 rds = args['r']
 kappa = args['k']
@@ -94,13 +95,13 @@ def data_gen(p, N, s, rds, kappa):
     tempA = np.zeros(s*p)
 
     # print(U.shape, S_clip.shape, Vh.shape)
-    randommaska = rdm.permutation(s*p)[:ka]
-    tempA[randommaska] = np.random.choice(a=[-1, 1], size=(randommaska.shape[0])) / np.sqrt(ka) * rds
-    A = np.pad(tempA.reshape(s, p), ((0, p-s), (0, 0)), 'constant')
-
-    # randommaska = rdm.permutation(s**2)[:kb]
+    # randommaska = rdm.permutation(s*p)[:ka]
     # tempA[randommaska] = np.random.choice(a=[-1, 1], size=(randommaska.shape[0])) / np.sqrt(ka) * rds
-    # A = np.pad(tempA.reshape(s, s), ((0, p - s), (0, p - s)), 'constant')
+    # A = np.pad(tempA.reshape(s, p), ((0, p-s), (0, 0)), 'constant')
+    tempA = np.zeros(s**2)
+    randommaska = rdm.permutation(s**2)[:ka]
+    tempA[randommaska] = np.random.choice(a=[-1, 1], size=(randommaska.shape[0])) / np.sqrt(ka) * rds
+    A = np.pad(tempA.reshape(s, s), ((0, p - s), (0, p - s)), 'constant')
     # Preprocess B
     tempB = np.zeros(s**2)
     randommaskb = rdm.permutation(s**2)[:kb]
