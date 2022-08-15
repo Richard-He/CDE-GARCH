@@ -20,7 +20,7 @@ parser.add_argument('--r','--rds', type=float, default=0.5,
 parser.add_argument('--k','--kappa', type=float, default=10,
                     help='rate between the last eigenvalue in the dynamic region versus the static region')
 parser.add_argument('--ka', type=int, default=20, help='sparsity of A')
-parser.add_argument('--kb', type=int, default=5, help='sparsity of B')
+parser.add_argument('--kb', type=int, default=20, help='sparsity of B')
 parser.add_argument('--d', '--data', type=str, default='data/',
                     help='data path')
 parser.add_argument('--re', '--results', type=str, default='results/',
@@ -40,7 +40,7 @@ args = vars(parser.parse_args())
 
 # Initialize Parameters
 ps = np.array([64, 128, 256, 512, 1024])
-Nops = np.array([0.125, 0.25, 0.5, 1, 2, 4, 8])
+Nops = np.array([0.25, 0.5, 1, 2, 4, 8])
 
 s = args['s']
 rds = args['r']

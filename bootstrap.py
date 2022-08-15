@@ -1,4 +1,7 @@
-import numpy
-import numpy as np
+"""
+Bootstrap Module
+
+We start by
+"""
 
 
