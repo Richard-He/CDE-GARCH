@@ -71,7 +71,7 @@ def fmin_cgprox(f, f_prime, g_prox, x0, rtol=1e-6,
         if verbose > 1:
             logging.info("Iteration %s, Error: %s" % (it, linalg.norm(Gt)))
 
-        if np.abs(fk_old - fk) / fk < rtol:
+        if np.abs(fk_old - fk) / fk < rtol or it == maxiter - 1:
             if verbose:
                 logging.info("Achieved relative tolerance at iteration %s" % it)
                 success = True
