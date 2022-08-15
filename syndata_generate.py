@@ -95,10 +95,13 @@ def data_gen(p, N, s, rds, kappa):
     tempA = np.zeros(s*p)
 
     # print(U.shape, S_clip.shape, Vh.shape)
-    randommaska = rdm.permutation(s*p)[:ka]
-    tempA[randommaska] = np.random.choice(a=[-1, 1], size=(randommaska.shape[0])) / np.sqrt(ka) * rds
+    #randommaska = rdm.permutation(s*p)[:ka]
+    #tempA[randommaska] = np.random.choice(a=[-1, 1], size=(randommaska.shape[0])) / np.sqrt(ka) * rds
+    #A = np.pad(tempA.reshape(s, p), ((0, p-s), (0, 0)), 'constant')
 
-    A = np.pad(tempA.reshape(s, p), ((0, p-s), (0, 0)), 'constant')
+    randommaska = rdm.permutation(s**2)[:kb]
+    tempA[randommaska] = np.random.choice(a=[-1, 1], size=(randommaska.shape[0])) / np.sqrt(ka) * rds
+    A = np.pad(tempA.reshape(s, s), ((0, p - s), (0, p - s)), 'constant')
     # Preprocess B
     tempB = np.zeros(s**2)
     randommaskb = rdm.permutation(s**2)[:kb]
