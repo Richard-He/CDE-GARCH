@@ -19,8 +19,8 @@ parser.add_argument('--r','--rds', type=float, default=0.5,
                     help='approximate spectral radius of A and B')
 parser.add_argument('--k','--kappa', type=float, default=10,
                     help='rate between the last eigenvalue in the dynamic region versus the static region')
-parser.add_argument('--ka', type=int, default=10, help='sparsity of A')
-parser.add_argument('--kb', type=int, default=10, help='sparsity of B')
+parser.add_argument('--ka', type=int, default=20, help='sparsity of A')
+parser.add_argument('--kb', type=int, default=5, help='sparsity of B')
 parser.add_argument('--d', '--data', type=str, default='data/',
                     help='data path')
 parser.add_argument('--re', '--results', type=str, default='results/',
@@ -40,9 +40,8 @@ args = vars(parser.parse_args())
 
 # Initialize Parameters
 ps = np.array([64, 128, 256, 512, 1024])
-Nops = np.array([0.5, 1, 2, 4, 8, 16])
-# ps = np.array([64, 256, 1024])
-# Nops = np.array([0.5, 0.75, 1, 2, 4])
+Nops = np.array([0.125, 0.25, 0.5, 1, 2, 4, 8])
+
 s = args['s']
 rds = args['r']
 kappa = args['k']
@@ -95,13 +94,13 @@ def data_gen(p, N, s, rds, kappa):
     tempA = np.zeros(s*p)
 
     # print(U.shape, S_clip.shape, Vh.shape)
-    #randommaska = rdm.permutation(s*p)[:ka]
-    #tempA[randommaska] = np.random.choice(a=[-1, 1], size=(randommaska.shape[0])) / np.sqrt(ka) * rds
-    #A = np.pad(tempA.reshape(s, p), ((0, p-s), (0, 0)), 'constant')
-
-    randommaska = rdm.permutation(s**2)[:kb]
+    randommaska = rdm.permutation(s*p)[:ka]
     tempA[randommaska] = np.random.choice(a=[-1, 1], size=(randommaska.shape[0])) / np.sqrt(ka) * rds
-    A = np.pad(tempA.reshape(s, s), ((0, p - s), (0, p - s)), 'constant')
+    A = np.pad(tempA.reshape(s, p), ((0, p-s), (0, 0)), 'constant')
+
+    # randommaska = rdm.permutation(s**2)[:kb]
+    # tempA[randommaska] = np.random.choice(a=[-1, 1], size=(randommaska.shape[0])) / np.sqrt(ka) * rds
+    # A = np.pad(tempA.reshape(s, s), ((0, p - s), (0, p - s)), 'constant')
     # Preprocess B
     tempB = np.zeros(s**2)
     randommaskb = rdm.permutation(s**2)[:kb]

@@ -45,7 +45,7 @@ args = vars(parser.parse_args())
 # Loss function evaluation
 
 ps = np.array([64, 128, 256, 512, 1024])
-Nops = np.array([0.5, 1, 2, 4, 8, 16])
+Nops = np.array([0.125, 0.25, 0.5, 1, 2, 4, 8])
 s_e = args['s']
 zeta = args['z']
 alpha = args['a']
@@ -116,7 +116,7 @@ def loss_convex_reg(param):
     for i in range(1, N):
         ximinus = x_h[i - 1]
         lambda_ei = lambda_e[:s_e] - (A_es + B_es)[:, :s_e] @ lambda_e[:s_e] + A_es @ (ximinus ** 2) + B_es[:, :s_e] @ lambda_eiminus
-        loss = loss + jnp.sum(jnp.log(lambda_ei) + x_h[i, :s_e] ** 2 / lambda_ei) / N
+        loss = loss + jnp.sum(jnp.log(lambda_ei)) + jnp.sum(x_h[i, :s_e] ** 2 / lambda_ei) / N
         lambda_eiminus = lambda_ei
     return loss
 
