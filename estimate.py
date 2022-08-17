@@ -1,17 +1,11 @@
-import warnings
-
-import numpy
-
 from cgprox import fmin_cgprox
 import numpy as np
 from functools import partial
 import jax.numpy as jnp
 import jax
-from tests import v_lambda, binary_search_s_gaussian
+from utils import v_lambda
 from jax import grad, jit, vmap
 import scipy.linalg as linalg
-from scipy import optimize
-import logging
 from time import gmtime, strftime
 import logging
 import argparse

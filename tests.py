@@ -1,134 +1,166 @@
-
 import numpy as np
-
+import argparse
+import numpy as np
+from functools import partial
+from jax import grad, jit, vmap
 import scipy.linalg as linalg
-import scipy.stats as stats
-# from syndata_generate import data_gen_test
-
-def v_lambda(x):
-    """
-
-    :param x: Nxp empirical observations
-    :return:
-    """
-    p = x.shape[1]
-    N = x.shape[0]
-    sum = np.zeros((p, p))
-    for i in range(N):
-        sum = sum + np.outer(x[i], x[i])
-    sum /= N
-    [V_e, lambda_e, Vp_e] = linalg.svd(sum)
-    # print(sum)
-    # print(V_e)
-    return V_e, lambda_e
+from scipy import optimize
+import pandas as pd
+import logging
+from time import gmtime, strftime
+from utils import data_gen, v_lambda, test_s_gaussian, test_s_ht, whitenoise_gen
 
 
-# Test if the rest of the vectors are independent.
-def sigma_tau(x, tau, V_e, s_e):
-    p = x.shape[1]
-    N = x.shape[0]
-    V_esc = V_e[:, s_e:]
-    Sigma_tau = np.zeros((p - s_e, p - s_e))
-    for t in range(N):
-        if t - tau < 0:
-            Sigma_tau = Sigma_tau + np.outer(V_esc.T @ x[t], V_esc.T @ x[N + t-tau]) / N
-        else:
-            Sigma_tau = Sigma_tau + np.outer(V_esc.T @ x[t], V_esc.T @ x[t-tau]) / N
-    return Sigma_tau
+parser = argparse.ArgumentParser(description='Parsing Input before estimation')
+parser.add_argument('--s', type=int, default=5,
+                    help='dimension of the ')
+parser.add_argument('--h', '--heavytail', action='store_true',
+                    help='Using Heavy Tailed white noise')
+parser.set_defaults(h=False)
+parser.add_argument('--k', '--kappa', type=float, default=10,
+                    help='rate between the last eigenvalue in the dynamic region versus the static region')
+parser.add_argument('--ka', type=int, default=10, help='sparsity of A')
+parser.add_argument('--kb', type=int, default=10, help='sparsity of B')
+parser.add_argument('--ra', '--rda', type=float, default=0.5,
+                    help='approximate spectral radius of A ')
+parser.add_argument('--rb', '--rdb', type=float, default=0.2,
+                    help='approximate spectral radius of B ')
+parser.add_argument('--re', '--results', type=str, default='results/',
+                    help='results path')
+parser.add_argument('--lfile', type=str, default='log/',
+                    help='logging path')
+parser.add_argument('--q', type=int, default=1)
+parser.add_argument('--p', action='store_true', help='Do we test power ? Otherwise we test size.')
+parser.set_defaults(p=False)
+parser.add_argument('--l','--log', action='store_true', help='Do we use logging ? Otherwise we print')
+parser.set_defaults(l=False)
+args = vars(parser.parse_args())
 
 
-def Gq(x, V_e, s_e, q):
-    sum = 0
-    for tau in range(1, q+1):
-        Sigma_t = sigma_tau(x, q, V_e, s_e)
-        sum += np.trace(Sigma_t @ Sigma_t.T)
-    return sum
+ka = args['ka']
+kb = args['kb']
+s_e = args['s']
+rdsa = args['ra']
+rdsb = args['rb']
+kappa = args['k']
+heavytail = args['h']
+is_power = args['p']
+if is_power:
+    ps = np.array([128, 256])
+    q = args['q']
+else:
+    ps = np.array([64, 128, 256, 512])
+    # qs = np.array([1, 3, 5])
+# Nops = np.array([0.125, 0.25, 0.5, 1, 2, 4])
+# Sops = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.15, 0.25, 0.35, 0.45, 0.5])
+# test case
+qs = np.array([1])
+Nops = np.array([0.125])
+Sops = np.array([0.01])
+respath = args['re']
+
+times = 10
+
+if args['l']:
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+    logging.basicConfig(filename=args['l']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+
+     f'hypotest_rda={rdsa}_rdb={rdsb}_kappa={kappa}_heavytail={heavytail}_q={q}_power={is_power}.log',
+                        format='%(asctime)s %(message)s', level=logging.INFO)
 
 
-def sl_e(l, V_e, x, s_e):
-    p = x.shape[1]
-    if l == 1:
-        return np.trace(sigma_tau(x, 0, V_e, s_e)) / (p - s_e)
-    elif l == 2:
-        return np.trace(sigma_tau(x, 0, V_e, s_e) @ sigma_tau(x, 0, V_e, s_e)) / (p - s_e)
-
-
-def calc_xi_gaussian(q, cp, s2_e, s1_e):
-    return np.sqrt(2 * q * cp ** 2 * (s2_e-cp * s1_e**2) ** 2)
-
-
-
-#\wh\sigma_2^2
-def sigma2_e(x, lambda_e, V_e):
-    N = x.shape[0]
-    return np.sum([linalg.norm((V_e.T @ x[i]) ** 4, 1) / (linalg.norm(lambda_e, 2) ** 2) for i in range(N)]) / N
-
-
-def test_s_gaussian(x, V_e, q, s_e):
-    p = x.shape[1]
-    N = x.shape[0]
-    s1_e = sl_e(1, V_e, x, s_e)
-    s2_e = sl_e(2, V_e, x, s_e)
-    cp = (p - s_e) / N
-    xi = calc_xi_gaussian(q, cp, s2_e, s1_e)
-    Z_alpha = 1.68  # The 95 percentile of Normal distribution
-    Gq1 = Gq(x, V_e, s_e, q)
-    # print(sigma2_e2)
-    #print("A", np.abs(Gq1 - q * N * cp ** 2 * s1_e**2))
-    #print("B", xi)
-    if np.abs(Gq1 - q * N * cp ** 2 * s1_e**2) > np.abs(Z_alpha * xi):
-        return False
-    else:
-        return True
-
-
-def test_s(x, V_e, q, s_e):
-    p = x.shape[1]
-    N = x.shape[0]
-    s1_e = sl_e(1, V_e, x, s_e)
-    s2_e = sl_e(2, V_e, x, s_e)
-    cp = (p - s_e) / N
-    xi = calc_xi_gaussian(q, cp, s2_e, s1_e)
-    Z_alpha = 1.68  # The 95 percentile of Normal distribution
-    Gq1 = Gq(x, V_e, s_e, q)
-    # print(sigma2_e2)
-    #print("A", np.abs(Gq1 - q * N * cp ** 2 * s1_e ** 2))
-    #print("B", xi)
-    if np.abs(Gq1 - q * N * cp ** 2 * s1_e ** 2) > np.abs(Z_alpha * xi):
-        return False
-    else:
-        return True
-
-
-
-def binary_search_s_gaussian(x, V_e, q, lambda_e):
-    p = x.shape[1]
-    h = p
-    l = 1
-    s_e = np.int64(np.ceil((h + l) / 2))
-    # sigma2_e2 = sigma2_e( x, lambda_e, V_e)
-    # print(sigma2_e2)
-
-    #sigma2_e2 = 3
-    while h - l > 1:
-        if test_s_gaussian(x, V_e, q, s_e):
-            h = s_e
-        else:
-            l = s_e
-        s_e = np.int64(np.ceil((h + l) / 2))
-    return s_e
-
-
-
-def test_power(p, Nop, s,rds, kappa, q, times):
+def test_power(p, N, s, s_e, rdsa, rdsb, kappa, q, times, ka, kb, heavytail=False):
     corr = 0
     for i in range(times):
-        x = data_gen_test(p, p*Nop, s, rds, kappa)
+        x = data_gen(p, N, s, rdsa, rdsb, kappa, ka ,kb,heavytail)
         V_e, lambda_e = v_lambda(x)
-        if not test_s_gaussian(x, V_e, q, 0):
-            corr += 1
+        # print(V_e, lambda_e)
+        if not heavytail:
+            if not test_s_gaussian(x, V_e, q, s_e):
+                corr += 1
+        else:
+            if not test_s_ht(x, V_e, q, s_e, s):
+            # print(f'reject at {i}')
+                corr += 1
     return corr/times
 
 
+def test_size(p, N, q, heavytail, times):
+    corr = 0
+    for i in range(times):
+        x = whitenoise_gen(p, N, heavytail)
+        V_e, lambda_e = v_lambda(x)
+        if not heavytail:
+            if not test_s_gaussian(x, V_e, q, s_e=0):
+                corr += 1
+        else:
+            if not test_s_ht(x, V_e, q, s_e=0, s=p):
+                # print(f'reject at {i}')
+                corr += 1
+    return corr / times
 
-# print(test_fdr(64,1,1,0.5,1,1,1000))
+
+def start_power():
+    powers = np.zeros([Sops.shape[0], ps.shape[0], Nops.shape[0]])
+    for k in range(ps.shape[0]):
+        p = ps[k]
+        for i in range(Nops.shape[0]):
+            nop = Nops[i]
+            for j in range(Sops.shape[0]):
+                sop = Sops[j]
+                s = np.ceil(sop * p).astype(int)
+                N = np.rint(p * nop).astype(int)
+                pwr = test_power(p, N, s, 0, rdsa, rdsb, kappa, q, times, ka, kb, heavytail)
+                powers[j, k, i] = pwr
+                if args['l']:
+                    logging.info(f's:{s}, N:{N}, p:{p}, power: {pwr}, heavytail: {heavytail}')
+                else:
+                    print(f's:{s}, N:{N}, p:{p}, power: {pwr}, heavytail: {heavytail}')
+    return powers
+
+
+def start_size():
+    sizes = np.zeros([ps.shape[0], qs.shape[0], Nops.shape[0]])
+    for j in range(qs.shape[0]):
+        q = qs[j]
+        for k in range(ps.shape[0]):
+            p = ps[k]
+            for i in range(Nops.shape[0]):
+                nop = Nops[i]
+                N = np.rint(p * nop).astype(int)
+                size = test_size(p, N, q, heavytail, times)
+                sizes[k,j,i] = size
+                if args['l']:
+                    logging.info(f'q:{q}, p:{p}, N:{N}, size:{size}, heavytail:{heavytail}')
+                else:
+                    print(f'q:{q}, p:{p}, N:{N}, size:{size}, heavytail:{heavytail}')
+    return sizes
+
+
+if is_power:
+    powers = start_power()
+    row_index = Sops.tolist()
+    iterables = [ps.tolist(), Nops.tolist()]
+    column_index = pd.MultiIndex.from_product(iterables, names=['T/p', 's/p'])
+    df = pd.DataFrame(powers.reshape(Sops.shape[0], -1), index=row_index,
+                      columns=column_index)
+    with open(
+            respath + f'hypotest_rda={rdsa}_rdb={rdsb}_kappa={kappa}_heavytail={heavytail}_q={q}_power={is_power}.txt',
+              "w") as text_file:
+        text_file.write(df.to_latex())
+else:
+    sizes = start_size()
+    iterables = [ps.tolist(), qs.tolist()]
+    row_index = pd.MultiIndex.from_product(iterables, names=['q', 'T/p'])
+    column_index = Nops.tolist()
+    df = pd.DataFrame(sizes.reshape(-1, Nops.shape[0]), index=row_index,
+                      columns=column_index)
+    with open(
+            respath + f'hypotest_rda={rdsa}_rdb={rdsb}_kappa={kappa}_heavytail={heavytail}_power={is_power}.txt',
+            "w") as text_file:
+        text_file.write(df.to_latex())
+
+
+# print(test_power(p=64, N=64, s=4, s_e=0, rdsa=0.4, rdsb=0.4, kappa=1, q=1,
+#                  times=10, ka=10, kb=10, heavytail=True))
+# print(test_size(p=64, N=64, s=4, s_e=4, q=1, heavytail=True, times=100))
