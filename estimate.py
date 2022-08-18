@@ -9,6 +9,8 @@ import scipy.linalg as linalg
 from time import gmtime, strftime
 import logging
 import argparse
+from plot import drawplot
+
 
 parser = argparse.ArgumentParser(description='Parsing Input before estimation')
 parser.add_argument('--s', type=int, default=5,
@@ -219,3 +221,4 @@ np.save(respath + f"l2errors" + ht + conv + f'z={zeta}'+".npy", l2errors)
 np.save(respath + f"fdrs" + ht + conv + f'z={zeta}'+ ".npy", fdrs)
 np.save(respath + f"lambda_errors" + ht + conv + f'z={zeta}'+".npy", lambda_errs)
 np.save(respath + f"V_errs" + ht + conv + f'z={zeta}'+".npy", V_errs)
+drawplot(fdrs=fdrs, l2errors=l2errors, Nops=Nops, ps=ps, graphpath=respath, zeta=zeta, ht=ht, conv=conv)

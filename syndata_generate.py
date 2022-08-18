@@ -81,14 +81,14 @@ def data_gen_t(p, N, s, rdsa, rdsb, kappa, ka, kb, heavytail):
     # A = np.pad(tempA.reshape(s, p), ((0, p-s), (0, 0)), 'constant')
     tempA = np.zeros(s ** 2)
     randommaska = rdm.permutation(s ** 2)[:ka]
-    tempA[randommaska] = np.random.choice(a=[1], size=(randommaska.shape[0]))[:ka]
+    tempA[randommaska] = np.random.choice(a=[1, 0.9, 0.8, 0.7, 0.6, 0.5], size=(randommaska.shape[0]))[:ka]
     _, lam, _ = linalg.svd(tempA.reshape(s, s), full_matrices=True)
     tempA *= rdsa / lam[0]
     A = np.pad(tempA.reshape(s, s), ((0, p - s), (0, p - s)), 'constant')
     # Preprocess B
     tempB = np.zeros(s ** 2)
     randommaskb = rdm.permutation(s ** 2)[:kb]
-    tempB[randommaskb] = np.random.choice(a=[1], size=(randommaskb.shape[0]))[:kb]
+    tempB[randommaskb] = np.random.choice(a=[1, 0.9, 0.8, 0.7, 0.6, 0.5], size=(randommaskb.shape[0]))[:kb]
     _, lam, _ = linalg.svd(tempB.reshape(s, s), full_matrices=True)
     tempA *= rdsb / lam[0]
     B = np.pad(tempB.reshape(s, s), ((0, p - s), (0, p - s)), 'constant')
