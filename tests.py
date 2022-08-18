@@ -50,13 +50,13 @@ if is_power:
     q = args['q']
 else:
     ps = np.array([64, 128, 256, 512])
-    # qs = np.array([1, 3, 5])
-# Nops = np.array([0.125, 0.25, 0.5, 1, 2, 4])
-# Sops = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.15, 0.25, 0.35, 0.45, 0.5])
+    qs = np.array([1, 3, 5])
+Nops = np.array([0.125, 0.25, 0.5, 1, 2, 4])
+Sops = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.15, 0.25, 0.35, 0.45, 0.5])
 # test case
-qs = np.array([1])
-Nops = np.array([0.125])
-Sops = np.array([0.01])
+# qs = np.array([1])
+# Nops = np.array([0.125])
+# Sops = np.array([0.01])
 respath = args['re']
 
 times = 10
@@ -64,7 +64,7 @@ times = 10
 if args['l']:
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
-    logging.basicConfig(filename=args['l']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+
+    logging.basicConfig(filename=args['lfile']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+
      f'hypotest_rda={rdsa}_rdb={rdsb}_kappa={kappa}_heavytail={heavytail}_q={q}_power={is_power}.log',
                         format='%(asctime)s %(message)s', level=logging.INFO)
 

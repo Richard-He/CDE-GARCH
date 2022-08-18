@@ -43,7 +43,6 @@ args = vars(parser.parse_args())
 ps = np.array([64, 128, 256, 512, 1024])
 Nops = np.array([0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8])
 s_e = args['s']
-zetatp = args['z']
 zeta = 0
 alpha = args['a']
 convex = args['c']
@@ -171,7 +170,6 @@ for i1 in range(ps.shape[0]):
         j = Nops[i2]
         p = i
         N = int(p * j)
-        zeta = zetatp / p
         x = np.load(path+f"X_p={p}_N={N}"+htn+".npy")
         A_true = np.load(path+f"A_p={p}_N={N}"+htn+".npy")
         B_true = np.load(path+f"B_p={p}_N={N}"+htn+".npy")
