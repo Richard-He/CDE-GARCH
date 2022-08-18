@@ -2,5 +2,5 @@
 *.ipynb
 .*
 _*
-/results
+/result*
 /log

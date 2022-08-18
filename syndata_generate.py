@@ -16,14 +16,14 @@ parser.add_argument('--s', type=int, default=5,
 parser.add_argument('--h','--heavytail', action='store_true',
                     help='Using Heavy Tailed white noise')
 parser.set_defaults(h=False)
-parser.add_argument('--ra','--rda', type=float, default=0.5,
+parser.add_argument('--ra','--rda', type=float, default=0.3,
                     help='approximate spectral radius of A ')
-parser.add_argument('--rb','--rdb', type=float, default=0.5,
+parser.add_argument('--rb','--rdb', type=float, default=0.3,
                     help='approximate spectral radius of B ')
-parser.add_argument('--k','--kappa', type=float, default=10,
+parser.add_argument('--k','--kappa', type=float, default=1,
                     help='rate between the last eigenvalue in the dynamic region versus the static region')
-parser.add_argument('--ka', type=int, default=20, help='sparsity of A')
-parser.add_argument('--kb', type=int, default=20, help='sparsity of B')
+parser.add_argument('--ka', type=int, default=15, help='sparsity of A')
+parser.add_argument('--kb', type=int, default=15, help='sparsity of B')
 parser.add_argument('--d', '--data', type=str, default='data/',
                     help='data path')
 parser.add_argument('--re', '--results', type=str, default='results/',
@@ -42,9 +42,10 @@ parser.add_argument('--l','--logging',type=str,default='log/',
 args = vars(parser.parse_args())
 
 # Initialize Parameters
-ps = np.array([64, 128, 256, 512, 1024])
-Nops = np.array([0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8])
-
+# ps = np.array([64, 128, 256, 512, 1024])
+# Nops = np.array([0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8])
+ps = np.array([64])
+Nops = np.array([0.5])
 s = args['s']
 rdsa = args['ra']
 rdsb = args['rb']
@@ -115,6 +116,6 @@ def start():
     for p in ps:
         for Nop in Nops:
             N = int(np.ceil(p * Nop))
-            data_gen_t(p, N, s, rdsa, rdsb, kappa)
+            data_gen_t(p, N, s, rdsa, rdsb, kappa, ka, kb, heavytail)
 
 start()

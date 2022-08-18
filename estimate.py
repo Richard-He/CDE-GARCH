@@ -18,7 +18,7 @@ parser.add_argument('--s', type=int, default=5,
 parser.add_argument('--h','--heavytail', action='store_true',
                     help='Using Heavy Tailed white noise')
 parser.set_defaults(h=False)
-parser.add_argument('--rtol', type=float, default=1e-7,
+parser.add_argument('--rtol', type=float, default=1e-6,
                     help='approximate spectral radius of A and B')
 parser.add_argument('--k','--kappa', type=float, default=10,
                     help='rate between the last eigenvalue in the dynamic region versus the static region')
@@ -43,7 +43,8 @@ args = vars(parser.parse_args())
 ps = np.array([64, 128, 256, 512, 1024])
 Nops = np.array([0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8])
 s_e = args['s']
-zeta = args['z']
+zetatp = args['z']
+zeta = 0
 alpha = args['a']
 convex = args['c']
 path = args['d']
@@ -117,6 +118,7 @@ def loss_convex_reg(param):
         lambda_eiminus = lambda_ei
     return loss
 
+
 # The smooth part of model selection loss:
 def rho(param):
     # def pointwise_scad(t):
@@ -169,6 +171,7 @@ for i1 in range(ps.shape[0]):
         j = Nops[i2]
         p = i
         N = int(p * j)
+        zeta = zetatp / p
         x = np.load(path+f"X_p={p}_N={N}"+htn+".npy")
         A_true = np.load(path+f"A_p={p}_N={N}"+htn+".npy")
         B_true = np.load(path+f"B_p={p}_N={N}"+htn+".npy")
