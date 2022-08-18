@@ -43,7 +43,7 @@ args = vars(parser.parse_args())
 
 # Initialize Parameters
 ps = np.array([64, 128, 256, 512, 1024])
-Nops = np.array([0.25, 0.5, 1, 2, 4, 8])
+Nops = np.array([0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8])
 
 s = args['s']
 rdsa = args['ra']

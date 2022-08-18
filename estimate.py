@@ -39,7 +39,7 @@ args = vars(parser.parse_args())
 # Loss function evaluation
 
 ps = np.array([64, 128, 256, 512, 1024])
-Nops = np.array([0.25, 0.5, 1, 2, 4, 8])
+Nops = np.array([0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8])
 s_e = args['s']
 zeta = args['z']
 alpha = args['a']
@@ -219,66 +219,3 @@ np.save(respath + f"l2errors" + ht + conv + f'z={zeta}'+".npy", l2errors)
 np.save(respath + f"fdrs" + ht + conv + f'z={zeta}'+ ".npy", fdrs)
 np.save(respath + f"lambda_errors" + ht + conv + f'z={zeta}'+".npy", lambda_errs)
 np.save(respath + f"V_errs" + ht + conv + f'z={zeta}'+".npy", V_errs)
-
-# for i1 in range(ps.shape[0]):
-#     i = ps[i1]
-#     for i2 in range(Nops.shape[0]):
-#         j = Nops[i2]
-#         p = i
-#         N = p * j
-#         x = np.load(f"X_p={p}_N={N}.npy")
-#         A_true = np.load(f"A_p={p}_N={N}.npy")
-#         B_true = np.load(f"B_p={p}_N={N}.npy")
-#         param_true = np.concatenate((A_true.reshape(-1), B_true.reshape(-1)))
-#         V_true = np.load(f"V_p={p}_N={N}.npy")
-#         V_e, lambda_e = v_lambda(x)
-#         V_error = linalg.norm(V_e.reshape(-1) - V_true.reshape(-1), 2)
-#         logging.info("V_err", V_error)
-#         lambda_true = np.load(f"lambda_s_p={p}_N={N}.npy")
-#
-#         lambda_err = linalg.norm(lambda_e - lambda_true, 2)
-#         logging.info("lambda_err", lambda_err)
-#         s_e = binary_search_s_gaussian(x, V_e, q=5, lambda_e=lambda_e)
-#         logging.info("s_e", s_e)
-#         x_h = calc_xh(x, V_e)
-#         if convex == False:
-#             loss_prime = grad(loss_nonconvex_reg)
-#             result = fmin_cgprox(f=loss_nonconvex_reg, f_prime=loss_prime, g_prox=g_prox, x0=np.zeros(s_e * p * 2), verbose=2 )
-#         else:
-#             loss_prime = jit(grad(loss_convex_reg))
-#             result = fmin_cgprox(f=loss_convex_reg, f_prime=loss_prime, g_prox=g_prox, x0=np.zeros(s_e * p * 2), verbose=2)
-#         if result.success:
-#             l2error, fdr = evaluate(result.x, param_true)
-#             fdrs[i1, i2] = fdr
-#             l2errors[i1, i2] = l2error
-#             V_errs[i1, i2] = V_error
-#             lambda_errs[i1, i2] = lambda_err
-#         else:
-#             logging.info("param difference", result.x - param_true)
-#             logging.info("V difference", V_e - V_true)
-#             logging.info("lambda_diff", lambda_true - lambda_e)
-#             exit()
-# np.save(f"l2errors.npy", l2errors)
-# np.save(f"fdrs.npy", fdrs)
-# np.save(f"lambda_errors.npy", lambda_errs)
-# np.save(f"V_errs.npy", V_errs)
-
-# for i2 in range(Nops.shape[0]):
-#     j = Nops[i2]
-#     p = ps[0]
-#     N = p * j
-#     x = np.load(f"data/X_p={p}_N={N}.npy")
-#     A_true = np.load(f"data/A_p={p}_N={N}.npy")
-#     B_true = np.load(f"data/B_p={p}_N={N}.npy")
-#     param_true = np.concatenate((A_true.reshape(-1), B_true.reshape(-1)))
-#     V_true = np.load(f"data/V_p={p}_N={N}.npy")
-#     V_e, lambda_e = v_lambda(x)
-#     V_error = linalg.norm(V_e.reshape(-1) - V_true.reshape(-1), 2)
-#     logging.info("V_err", V_error)
-#     lambda_true = np.load(f"data/lambda_s_p={p}_N={N}.npy")
-#
-#     lambda_err = linalg.norm(lambda_e - lambda_true, 2)
-#     logging.info("lambda_err", lambda_err)
-#     s_e = binary_search_s_gaussian(x, V_e, q=1, lambda_e=lambda_e)
-#     logging.info("Nops", Nops[i2])
-#     logging.info("s_e", s_e)
