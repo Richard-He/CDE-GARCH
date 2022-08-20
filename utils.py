@@ -8,24 +8,24 @@ import scipy.linalg as linalg
 def sample_x(lambd, V, p, heavytail):
     if heavytail:
         epsilon_t = stats.t.rvs(3, size=p)
-        #print(epsilon_t.shape)
         var = 3 / (3-2)
         epsilon_t *= 1/np.sqrt(var)
     else:
         epsilon_t = rdm.randn(p)
-    # print(epsilon_t.dtype)
     if (lambd < 0).any() == True:
         exit()
     Lambd = np.diag(np.sqrt(lambd))
-    #print(lambd.shape)
     x = V @ Lambd @ epsilon_t
-    #print(x.shape)
     return x
 
 
 def get_next_lambda(x_t, lambda_t, lambda_s, A, B, Vp, p):
-    #print(x_t.shape, lambda_s.shape, lambda_t.shape, A.shape, B.shape, Vp.shape, p)
-    lambda_tp = np.abs((np.eye(p) - A - B) @ lambda_s + A @ ((Vp @ x_t) ** 2) + B @ lambda_t)
+    lambda_tp = (np.eye(p) - A - B) @ lambda_s + A @ ((Vp @ x_t) ** 2) + B @ lambda_t
+    return lambda_tp
+
+
+def get_next_lambda_abs(x_t, lambda_t, lambda_s, A, B, Vp, p):
+    lambda_tp = np.clip((np.eye(p) - A - B) @ lambda_s + A @ ((Vp @ x_t) ** 2) + B @ lambda_t, a_min=0, a_max=None)
     return lambda_tp
 
 
@@ -37,8 +37,6 @@ def v_lambda(x):
         sum = sum + np.outer(x[i], x[i])
     sum /= N
     [V_e, lambda_e, Vp_e] = linalg.svd(sum)
-    # print(sum)
-    # print(V_e)
     return V_e, lambda_e
 
 
@@ -119,9 +117,6 @@ def test_s_ht(x, V_e, q, s_e, s):
     xi = calc_xi_ht(q, cp, s2_e, s1_e, sigma22, T=N)
     Z_alpha = 1.68  # The 95 percentile of Normal distribution
     Gq1 = Gq(x, V_e, s_e, q)
-    #print(sigma22)
-    #print("A", np.abs(Gq1 - q * N * cp ** 2 * s1_e**2 + q * cp * (sigma22 - 1) * (s2_e - cp*s1_e**2) / N))
-    #print("B", xi)
     if np.abs(Gq1 - q * N * cp ** 2 * s1_e**2 + q * cp * (sigma22 - 1) * (s2_e - cp*s1_e**2) / N ) > np.abs(Z_alpha * xi):
         return False
     else:
@@ -134,10 +129,7 @@ def binary_search_s_gaussian(x, V_e, q, lambda_e):
     h = p
     l = 1
     s_e = np.int64(np.ceil((h + l) / 2))
-    # sigma2_e2 = sigma2_e( x, lambda_e, V_e)
-    # print(sigma2_e2)
 
-    #sigma2_e2 = 3
     while h - l > 1:
         if test_s_gaussian(x, V_e, q, s_e):
             h = s_e
@@ -147,7 +139,7 @@ def binary_search_s_gaussian(x, V_e, q, lambda_e):
     return s_e
 
 
-def data_gen(p, N, s, rdsa, rdsb, kappa, ka, kb, heavytail):
+def data_gen(p, N, s, rdsa, rdsb, kappa, ka, kb, heavytail, abs=False):
     lambda_s = np.concatenate((np.flip(np.arange(1, s + 1)) * kappa, np.zeros(p - s)))
     V = stats.ortho_group.rvs(dim=p)
     Vp = V.T
@@ -180,7 +172,7 @@ def data_gen(p, N, s, rdsa, rdsb, kappa, ka, kb, heavytail):
     x[0] = x_t
     for i in range(1, N):
         # print(lambda_t[:s])
-        lambda_t = get_next_lambda(x_t, lambda_t, lambda_s, A, B, Vp, p)
+        lambda_t = get_next_lambda_abs(x_t, lambda_t, lambda_s, A, B, Vp, p)
         x_t = sample_x(lambda_t, V, p, heavytail)
         x[i] = x_t
     return x

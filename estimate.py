@@ -18,7 +18,7 @@ parser.add_argument('--s', type=int, default=5,
 parser.add_argument('--h','--heavytail', action='store_true',
                     help='Using Heavy Tailed white noise')
 parser.set_defaults(h=False)
-parser.add_argument('--rtol', type=float, default=1e-6,
+parser.add_argument('--rtol', type=float, default=1,
                     help='approximate spectral radius of A and B')
 parser.add_argument('--k','--kappa', type=float, default=10,
                     help='rate between the last eigenvalue in the dynamic region versus the static region')
@@ -40,8 +40,10 @@ parser.add_argument('--l','--logging',type=str,default='log/',
 args = vars(parser.parse_args())
 # Loss function evaluation
 
-ps = np.array([64, 128, 256, 512, 1024])
-Nops = np.array([0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8])
+# ps = np.array([64, 128, 256, 512, 1024])
+# Nops = np.array([0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8])
+ps = np.array([64])
+Nops = np.array([0.5])
 s_e = args['s']
 zeta = 0
 alpha = args['a']
@@ -222,4 +224,4 @@ np.save(respath + f"l2errors" + ht + conv + f'z={zeta}'+".npy", l2errors)
 np.save(respath + f"fdrs" + ht + conv + f'z={zeta}'+ ".npy", fdrs)
 np.save(respath + f"lambda_errors" + ht + conv + f'z={zeta}'+".npy", lambda_errs)
 np.save(respath + f"V_errs" + ht + conv + f'z={zeta}'+".npy", V_errs)
-drawplot(fdrs=fdrs, l2errors=l2errors, Nops=Nops, ps=ps, graphpath=respath, zeta=zeta, ht=ht, conv=conv)
+drawplot(fdrs=fdrs, l2errors=l2errors, Nops=Nops, ps=ps, respath=respath, zeta=zeta, ht=ht, conv=conv)

@@ -5,7 +5,7 @@ import scipy.stats as stats
 import scipy.linalg as linalg
 import argparse
 import logging
-from utils import sample_x, get_next_lambda
+from utils import sample_x, get_next_lambda, get_next_lambda_abs
 from time import gmtime, strftime
 
 
@@ -16,9 +16,9 @@ parser.add_argument('--s', type=int, default=5,
 parser.add_argument('--h','--heavytail', action='store_true',
                     help='Using Heavy Tailed white noise')
 parser.set_defaults(h=False)
-parser.add_argument('--ra','--rda', type=float, default=0.3,
+parser.add_argument('--ra','--rda', type=float, default=0.2,
                     help='approximate spectral radius of A ')
-parser.add_argument('--rb','--rdb', type=float, default=0.3,
+parser.add_argument('--rb','--rdb', type=float, default=0.2,
                     help='approximate spectral radius of B ')
 parser.add_argument('--k','--kappa', type=float, default=1,
                     help='rate between the last eigenvalue in the dynamic region versus the static region')
@@ -101,7 +101,7 @@ def data_gen_t(p, N, s, rdsa, rdsb, kappa, ka, kb, heavytail):
     x[0] = x_t
     for i in range(1, N):
         # print(lambda_t[:s])
-        lambda_t = get_next_lambda(x_t, lambda_t, lambda_s, A, B, Vp, p)
+        lambda_t = get_next_lambda_abs(x_t, lambda_t, lambda_s, A, B, Vp, p)
         x_t = sample_x(lambda_t, V, p, heavytail)
         x[i] = x_t
     logging.debug(f"Success,X_p={p}_N={N}"+ht)
