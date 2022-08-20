@@ -69,7 +69,7 @@ logging.basicConfig(filename=args['l']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+f
 
 
 def data_gen_t(p, N, s, rdsa, rdsb, kappa, ka, kb, heavytail):
-    lambda_s = np.concatenate((np.flip(np.arange(1, s + 1)) * kappa, np.zeros(p - s)))
+    lambda_s = np.concatenate((np.flip(np.arange(1, s + 1, dtype=float)) * kappa, np.zeros(p - s)))
     V = stats.ortho_group.rvs(dim=p)
     Vp = V.T
 
@@ -101,7 +101,7 @@ def data_gen_t(p, N, s, rdsa, rdsb, kappa, ka, kb, heavytail):
     x[0] = x_t
     for i in range(1, N):
         # print(lambda_t[:s])
-        lambda_t = get_next_lambda_abs(x_t, lambda_t, lambda_s, A, B, Vp, p)
+        lambda_t = get_next_lambda(x_t, lambda_t, lambda_s, A, B, Vp, p)
         x_t = sample_x(lambda_t, V, p, heavytail)
         x[i] = x_t
     logging.debug(f"Success,X_p={p}_N={N}"+ht)
