@@ -21,7 +21,7 @@ heavy_tail = True
 # ps = np.array([64, 128, 256, 512, 1024])
 # Nops = np.array([0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8])
 
-def drawplot(Nops, ps, respath, zeta, ht, conv, l2errors, fdrs):
+def drawplot(Nops, ps, respath, zeta, ht, conv, l2errors, fdrs,rds, multi=''):
     if l2errors is None:
         l2errors = np.load(respath + f"l2errors" + ht + conv + "new" + f'zeta={zeta}' + ".npy")
     if fdrs is None:
@@ -37,8 +37,8 @@ def drawplot(Nops, ps, respath, zeta, ht, conv, l2errors, fdrs):
     fdrplot = sns.relplot(x="npr", y="fdr", hue='p',  kind="line", data=df)
     fig1 = l2rplot.fig
     fig2 = fdrplot.fig
-    fig1.savefig(respath + f"l2errors" + ht + conv + f'zeta={zeta}' + ".png")
-    fig2.savefig(respath + f"fdr" + ht + conv + f'zeta={zeta}'+".png")
+    fig1.savefig(respath + f"l2errors" + ht + conv + f'zeta={zeta}_rds={rds}' + multi+".png")
+    fig2.savefig(respath + f"fdr" + ht + conv + f'zeta={zeta}_rds={rds}'+ multi+".png")
     return 0
 
 

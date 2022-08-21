@@ -21,7 +21,7 @@ def sample_x(lambd, V, p, heavytail):
 
 def get_next_lambda(x_t, lambda_t, lambda_s, A, B, Vp, p):
     lambda_tp = (np.eye(p) - A - B) @ lambda_s + A @ ((Vp @ x_t) ** 2) + B @ lambda_t
-    mask = lambda_tp <= 0
+    mask = (lambda_tp <= 0)+(np.isnan(lambda_tp))
     lambda_tp[mask] = lambda_s[mask]
     return lambda_tp
 

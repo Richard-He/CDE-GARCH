@@ -59,7 +59,7 @@ Sops = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.15, 0.25, 0.35, 0.45, 0.5]
 # Sops = np.array([0.01])
 respath = args['re']
 
-times = 10
+times = 1000
 
 if args['l']:
     for handler in logging.root.handlers[:]:
