@@ -43,9 +43,9 @@ parser.add_argument('--d', '--data', type=str, default='data/',
                     help='data path')
 parser.add_argument('--re', '--results', type=str, default='results/',
                     help='results path')
-parser.add_argument('--c','--convex', action='store_true',
-                    help='Using convex loss or not')
-parser.set_defaults(c=False)
+parser.add_argument('--e','--esti', action='store_true',
+                    help='Estimate the Quantile or not')
+parser.set_defaults(e=False)
 parser.add_argument('--rtol', type=float, default=1e-6,
                     help='related tolerance')
 parser.add_argument('--z','--zeta', type=float, default=1e-1,
@@ -78,6 +78,7 @@ rdsc = args['rc']
 respath = args['re']
 zeta = args['z']
 parametric = args['p']
+esti = args['e']
 
 if args['h']:
     ht = 'ht'
@@ -90,7 +91,7 @@ else:
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 logging.basicConfig(filename=args['l']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+f'Mis-specify_{ht}_misspecify' + f'ra={rdsa}' +
-                             f'ra={rdsb}'+f'parametric_{parametric}'+'.log',format='%(asctime)s %(message)s',
+                             f'ra={rdsb}'+f'parametric_{parametric}_estimate_{esti}.log', format='%(asctime)s %(message)s',
                      level=logging.DEBUG)
 
 class Loss_Convex(object):
@@ -179,23 +180,15 @@ def data_gen_mis(p, N, s, kappa):
     tempC[randommaskc] = np.random.choice(a=[1], size=(randommaskc.shape[0])) / np.sqrt(kc) * rdsc
     C = np.pad(tempB.reshape(s, s), ((0, p-s), (0, p-s)), 'constant')
     x = np.zeros([N, p], dtype=numpy.float64)
-    lambda_ts = np.zeros([N, p])
     x_t = sample_x(lambda_s, V, p, heavytail)
     lambda_t = lambda_s
     x[0] = x_t
     for i in range(1, N):
         lambda_t = get_next_lambda_mis(x_t, lambda_t, lambda_s, A, B, C, Vp, p)
-        try:
-            lambda_ts[i-1] = lambda_t
-        except BaseException as e:
-            print(lambda_ts[i-1], lambda_t)
-            print('Error' + str(e))
-            exit()
         x_t = sample_x(lambda_t, V, p, heavytail)
         x[i] = x_t
     lambda_t = get_next_lambda_mis(x_t, lambda_t, lambda_s, A, B, C, Vp, p)
-    lambda_ts[N-1] = lambda_t
-    return x, A, B, C, lambda_ts
+    return x, A, B, C, lambda_t
 
 
 def estimate_white_noise(x_h, A_se, B_se, lambda_e, N, s_e):
@@ -322,34 +315,38 @@ sns.set_theme(style="darkgrid")
 for p in ps:
     for nop in Nops:
         N = nop * p
-        if args['p']:
-            x, A, B, C, lambda_ts = data_gen_mis(p, N, s_e, kappa)
-            esti_quantiles = get_quantile(lambda_ts, w=np.ones(p))
-            V_e, lambda_e, A_es, B_es, x_h = get_estimate(x, s_e, zeta=zeta)
-            pb_x = parametric_bootstrap(x_h, A_es, B_es, lambda_e, V_e, s_e, M)
-            lambda_ts = np.zeros([M, p])
+        if args['e']:
+            lambda_ts = np.zeros(M, p)
             for i in range(M):
-                V_e1, lambda_e1, A_es1, B_es1, x_h1 = get_estimate(pb_x[i], s_e, zeta=zeta)
-                lambda_ts[i] = get_lambda_T(x_h1, A_es1, B_es1, lambda_e1, T=N)
-            bootstrap_quantile = get_quantile(lambda_ts, w=np.ones(p))
+                _, _, _, _, lambda_t = data_gen_mis(p, N, s_e, kappa)
+                lambda_ts = lambda_t
+            esti_quantile = get_quantile(lambda_ts, w=np.ones(p))
+            np.save(respath + f"Parametric_{args['p']}_p={p}_N={N}_estiqtl.npy", esti_quantile)
         else:
-            x, A, B, C, lambda_ts = data_gen_mis(p, N, s_e, kappa)
-            esti_quantiles = get_quantile(lambda_ts, w=np.ones(p))
-            wd_x = wild_bootstrap(x, p)
+            esti_quantile = np.load(respath + f"Parametric_{args['p']}_p={p}_N={N}_estiqtl.npy")
             lambda_ts = np.zeros([M, p])
-            for i in range(M):
-                V_e1, lambda_e1, A_es1, B_es1, x_h1 = get_estimate(wd_x[i], s_e, zeta=zeta)
-                lambda_ts[i] = get_lambda_T(x_h1, A_es1, B_es1, lambda_e1, T=N)
-            bootstrap_quantile = get_quantile(lambda_ts, w=np.ones(p))
-        np.save(respath + f"Parametric_{args['p']}_p={p}_N={N}_M={M}_bootstrap_quan.npy", bootstrap_quantile)
-        np.save(respath + f"Parametric_{args['p']}_p={p}_N={N}_M={M}_estimate_quan.npy", esti_quantiles)
-        q_index = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] * 2)
-        type = np.array(['bootstrapped'] * 9 + ['estimated'] * 9)
-        quantiles = np.concatenate((bootstrap_quantile, esti_quantiles))
-        df1 = pd.DataFrame(dict(type=type, quantiles=quantiles, x=q_index))
-        qtplot = sns.relplot(x='x', y='quantiles', kind='line', hue='type', data=df1)
-        fig = qtplot.fig
-        fig.savefig(respath + f"Parametric_{args['p']}_p={p}_N={N}_M={M}_bootstrap.png")
+            x, A, B, C, lambda_t = data_gen_mis(p, N, s_e, kappa)
+            if args['p']:
+                V_e, lambda_e, A_es, B_es, x_h = get_estimate(x, s_e, zeta=zeta)
+                pb_x = parametric_bootstrap(x_h, A_es, B_es, lambda_e, V_e, s_e, M)
+                for i in range(M):
+                    V_e1, lambda_e1, A_es1, B_es1, x_h1 = get_estimate(pb_x[i], s_e, zeta=zeta)
+                    lambda_ts[i] = get_lambda_T(x_h1, A_es1, B_es1, lambda_e1, T=N)
+                bootstrap_quantile = get_quantile(lambda_ts, w=np.ones(p))
+            else:
+                wd_x = wild_bootstrap(x, p)
+                for i in range(M):
+                    V_e1, lambda_e1, A_es1, B_es1, x_h1 = get_estimate(wd_x[i], s_e, zeta=zeta)
+                    lambda_ts[i] = get_lambda_T(x_h1, A_es1, B_es1, lambda_e1, T=N)
+                bootstrap_quantile = get_quantile(lambda_ts, w=np.ones(p))
+            np.save(respath + f"Parametric_{args['p']}_p={p}_N={N}_M={M}_bootstrap_quan.npy", bootstrap_quantile)
+            q_index = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] * 2)
+            type = np.array(['bootstrapped'] * 9 + ['estimated'] * 9)
+            quantiles = np.concatenate((bootstrap_quantile, esti_quantile))
+            df1 = pd.DataFrame(dict(type=type, quantiles=quantiles, x=q_index))
+            qtplot = sns.relplot(x='x', y='quantiles', kind='line', hue='type', data=df1)
+            fig = qtplot.fig
+            fig.savefig(respath + f"Parametric_{args['p']}_p={p}_N={N}_M={M}_bootstrap.png")
 
 
 
