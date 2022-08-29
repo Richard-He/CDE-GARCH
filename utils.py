@@ -10,20 +10,62 @@ def sample_x(lambd, V, p, heavytail):
         epsilon_t = stats.t.rvs(3, size=p)
         var = 3 / (3-2)
         epsilon_t *= 1/np.sqrt(var)
-    else:
+    elif heavytail is False:
         epsilon_t = rdm.randn(p)
     if (lambd < 0).any() == True:
         exit()
-    Lambd = np.diag(np.sqrt(lambd))
-    x = V @ Lambd @ epsilon_t
+    Lambdsqrt = np.diag(np.sqrt(lambd))
+    x = V @ Lambdsqrt @ epsilon_t
     return x
 
 
+def studentize(epsilons):
+    """
+
+    :param epsilons: estimated white noise
+    :return: studentized epsilons
+    """
+    mean = np.mean(epsilons)
+    mean2 = np.mean(epsilons ** 2)
+    return (epsilons - mean) / np.sqrt(mean2 - mean ** 2)
+
+
+def calc_xh(x, V_e):
+    N = x.shape[0]
+    p = x.shape[1]
+    x_h = np.zeros((N, p))
+    for i in range(N):
+        x_h[i] = V_e.T @ x[i]
+    return x_h
+
+
+def sample_innovation(epsilons, p):
+    return rdm.choice(epsilons.reshape(-1), size=p, replace=True, p=None)
+
+
+def sample_x_from_epsilon(lambd, V, epsilons, p):
+    epsilon = sample_innovation(epsilons, p)
+    return V @ np.diag(np.sqrt(lambd)) @ epsilon
+
+
 def get_next_lambda(x_t, lambda_t, lambda_s, A, B, Vp, p):
-    lambda_tp = (np.eye(p) - A - B) @ lambda_s + A @ ((Vp @ x_t) ** 2) + B @ lambda_t
-    mask = (lambda_tp <= 0)+(np.isnan(lambda_tp))
+    lambda_tp = np.zeros(p)
+    s_e = A.shape[0]
+    lambda_tp[:s_e] = lambda_s[:s_e] - (A + B) @ lambda_s + A @ ((Vp @ x_t) ** 2) + B @ lambda_t
+    lambda_tp[s_e:] = lambda_s[s_e:]
+    mask = (lambda_tp < 0) + np.isnan(lambda_tp) + np.isinf(lambda_tp)
     lambda_tp[mask] = lambda_s[mask]
     return lambda_tp
+
+
+def get_next_estimated_lambda(x_th, lambda_te, lambda_se, A_e, B_e):
+    p = x_th.shape[0]
+    lambda_tep = np.zeros(p)
+    s_e = A_e.shape[0]
+    lambda_tep[:s_e] = lambda_se[:s_e] - ( A_e + B_e) @ lambda_se + A_e @ (x_th**2) + B_e @ lambda_te
+    lambda_tep[s_e:] = lambda_se[s_e:]
+    return lambda_tep
+
 
 
 def get_next_lambda_abs(x_t, lambda_t, lambda_s, A, B, Vp, p):
@@ -174,7 +216,10 @@ def data_gen(p, N, s, rdsa, rdsb, kappa, ka, kb, heavytail, abs=False):
     x[0] = x_t
     for i in range(1, N):
         # print(lambda_t[:s])
-        lambda_t = get_next_lambda_abs(x_t, lambda_t, lambda_s, A, B, Vp, p)
+        if abs is True:
+            lambda_t = get_next_lambda_abs(x_t, lambda_t, lambda_s, A, B, Vp, p)
+        else:
+            lambda_t = get_next_lambda(x_t, lambda_t, lambda_s, A, B, Vp, p)
         x_t = sample_x(lambda_t, V, p, heavytail)
         x[i] = x_t
     return x

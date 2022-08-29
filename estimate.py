@@ -3,7 +3,7 @@ import numpy as np
 from functools import partial
 import jax.numpy as jnp
 import jax
-from utils import v_lambda
+from utils import v_lambda, calc_xh
 from jax import grad, jit, vmap
 import scipy.linalg as linalg
 from time import gmtime, strftime
@@ -148,11 +148,7 @@ def rho(param):
     return loss
 
 
-def calc_xh(x, V_e):
-    x_h = np.zeros((N, p))
-    for i in range(N):
-        x_h[i] = V_e.T @ x[i]
-    return x_h
+
 
 
 # Soft thresholding

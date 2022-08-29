@@ -4,10 +4,11 @@ import jax.numpy as jnp
 from scipy import optimize
 from scipy import linalg
 import logging
+import sys
 import time
 # Proximal Gradient Method implemented by C-OPT Package by
 def fmin_cgprox(f, f_prime, g_prox, x0, rtol=1e-6,
-                maxiter=1000, verbose=0, default_step_size=1.):
+                maxiter=1000, verbose=0, default_step_size=10.):
     """
     proximal gradient-descent solver for optimization problems of the form
                        minimize_x f(x) + g(x)
@@ -53,6 +54,9 @@ def fmin_cgprox(f, f_prime, g_prox, x0, rtol=1e-6,
         while True:  # adjust step size
             xk_grad = xk - step_size * grad_fk
             prx = g_prox(xk_grad, step_size)
+            if np.isnan(prx).any() or np.isinf(prx).any() or np.isnan(xk).any() or np.isinf(xk).any():
+                print(prx, step_size, xk_grad)
+                sys.exit()
             Gt = (xk - prx) / step_size
             lhand = np.array(f(jnp.array(xk - step_size * Gt)))
             rhand = fk - step_size * grad_fk.dot(Gt) + \
