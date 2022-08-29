@@ -270,12 +270,12 @@ def wild_bootstrap(x, M, bandwidth=5):
     x_star = np.zeros([N, p])
     x_bar = np.mean(x, axis=0)
     kernel = Kernel(bandwidth=bandwidth)
-    x_stars = np.zeros([M, p])
+    x_stars = np.zeros([M, N, p])
     for j in range(M):
         w = generate_W(kernel, N)
         for i in range(N):
             x_stars[j, i] = x_bar + (x[i] - x_bar) * w[i]
-        return x_star
+    return x_stars
 
 
 def get_estimate(x, s_e, zeta):
