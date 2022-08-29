@@ -46,7 +46,7 @@ parser.add_argument('--re', '--results', type=str, default='results/',
 parser.add_argument('--c','--convex', action='store_true',
                     help='Using convex loss or not')
 parser.set_defaults(c=False)
-parser.add_argument('--rtol', type=float, default=1,
+parser.add_argument('--rtol', type=float, default=1e-6,
                     help='related tolerance')
 parser.add_argument('--z','--zeta', type=float, default=1e-1,
                     help='regularization hyperparameter')
@@ -77,6 +77,7 @@ rdsb = args['rb']
 rdsc = args['rc']
 respath = args['re']
 zeta = args['z']
+parametric = args['p']
 
 if args['h']:
     ht = 'ht'
@@ -89,7 +90,7 @@ else:
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 logging.basicConfig(filename=args['l']+strftime("%Y-%m-%d %H:%M:%S", gmtime())+f'Mis-specify_{ht}_misspecify' + f'ra={rdsa}' +
-                             f'ra={rdsb}'+f'parametric_{args[']}'+'.log',format='%(asctime)s %(message)s',
+                             f'ra={rdsb}'+f'parametric_{parametric}'+'.log',format='%(asctime)s %(message)s',
                      level=logging.DEBUG)
 
 class Loss_Convex(object):
