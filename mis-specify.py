@@ -23,16 +23,16 @@ from utils import get_next_lambda,v_lambda,\
 
 
 parser = argparse.ArgumentParser(description='Parsing Input before generating synthetic data')
-parser.add_argument('--s', type=int, default=2,
-                    help='dimension of the ')
+parser.add_argument('--s', type=int, default=3,
+                    help='dimension of the dynamic scale')
 parser.add_argument('--h','--heavytail', action='store_true',
                     help='Using Heavy Tailed white noise')
 parser.set_defaults(h=False)
-parser.add_argument('--ra','--rda', type=float, default=0.05,
+parser.add_argument('--ra','--rda', type=float, default=0.02,
                     help='approximate spectral radius of A ')
-parser.add_argument('--rb','--rdb', type=float, default=0.05,
+parser.add_argument('--rb','--rdb', type=float, default=0.02,
                     help='approximate spectral radius of B ')
-parser.add_argument('--rc','--epsilon', type=float, default=0.1,
+parser.add_argument('--rc','--epsilon', type=float, default=0.15,
                     help='approximate spectral radius of C')
 parser.add_argument('--k','--kappa', type=float, default=1,
                     help='rate between the last eigenvalue in the dynamic region versus the static region')
@@ -41,14 +41,14 @@ parser.add_argument('--kb', type=int, default=10, help='sparsity of B')
 parser.add_argument('--kc', type=int, default=10, help='sparsity of C')
 parser.add_argument('--d', '--data', type=str, default='data/',
                     help='data path')
-parser.add_argument('--re', '--results', type=str, default='results/',
+parser.add_argument('--re', '--results', type=str, default='/home/yh6607/projects/CDE-GARCH/results/',
                     help='results path')
 parser.add_argument('--e','--esti', action='store_true',
                     help='Estimate the Quantile or not')
 parser.set_defaults(e=False)
 parser.add_argument('--rtol', type=float, default=1e-6,
                     help='related tolerance')
-parser.add_argument('--z','--zeta', type=float, default=1e-1,
+parser.add_argument('--z','--zeta', type=float, default=1e-2,
                     help='regularization hyperparameter')
 parser.add_argument('--a','--alpha',type=float, default=2.5,
                     help='SCAD hyperparameter')
@@ -56,7 +56,7 @@ parser.add_argument('--l','--logging',type=str,default='log/',
                     help='logging path')
 parser.add_argument('--p', action='store_true',
                     help='Do we use parametric Bootstrap or not ?')
-parser.add_argument('--rs', type=int, default=20,
+parser.add_argument('--rs', type=int, default=100,
                     help='What is the resample size ?')
 args = vars(parser.parse_args())
 
@@ -260,7 +260,6 @@ def generate_W(kernel, N):
 def wild_bootstrap(x, M, bandwidth=5):
     N = x.shape[0]
     p = x.shape[1]
-    x_star = np.zeros([N, p])
     x_bar = np.mean(x, axis=0)
     kernel = Kernel(bandwidth=bandwidth)
     x_stars = np.zeros([M, N, p])
@@ -321,9 +320,9 @@ for p in ps:
                 _, _, _, _, lambda_t = data_gen_mis(p, N, s_e, kappa)
                 lambda_ts = lambda_t
             esti_quantile = get_quantile(lambda_ts, w=np.ones(p))
-            np.save(respath + f"Parametric_{args['p']}_p={p}_N={N}_estiqtl.npy", esti_quantile)
+            np.save(respath + f"Parametric_p={p}_N={N}_estiqtl.npy", esti_quantile)
         else:
-            esti_quantile = np.load(respath + f"Parametric_{args['p']}_p={p}_N={N}_estiqtl.npy")
+            esti_quantile = np.load(respath + f"Parametric_p={p}_N={N}_estiqtl.npy")
             lambda_ts = np.zeros([M, p])
             x, A, B, C, lambda_t = data_gen_mis(p, N, s_e, kappa)
             if args['p']:
@@ -334,7 +333,7 @@ for p in ps:
                     lambda_ts[i] = get_lambda_T(x_h1, A_es1, B_es1, lambda_e1, T=N)
                 bootstrap_quantile = get_quantile(lambda_ts, w=np.ones(p))
             else:
-                wd_x = wild_bootstrap(x, p)
+                wd_x = wild_bootstrap(x, M)
                 for i in range(M):
                     V_e1, lambda_e1, A_es1, B_es1, x_h1 = get_estimate(wd_x[i], s_e, zeta=zeta)
                     lambda_ts[i] = get_lambda_T(x_h1, A_es1, B_es1, lambda_e1, T=N)
